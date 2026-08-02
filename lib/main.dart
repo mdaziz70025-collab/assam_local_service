@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'Provider/map_data_provider.dart';
+import 'screens/login_screen.dart';
 import 'screens/category_screen.dart';
 import 'screens/mapsScreen.dart';
 import 'screens/appointmentScreen.dart';
@@ -27,9 +28,10 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        // Pehle Category Screen khulegi
-        initialRoute: '/',
+        // App khulte hi Login Screen dikhegi
+        initialRoute: '/login',
         routes: {
+          '/login': (context) => const LoginScreen(),
           '/': (context) => const CategoryScreen(),
           '/mappage': (context) => const Mappage(),
           '/appointmentScreen': (context) => const AppointmentScreen(),
