@@ -15,16 +15,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Java 11 set kar rahe hain taaki purane Gradle versions ke sath Groovy error na aaye
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '11'
 
+      # Flutter version ko 3.19.6 par lock kar rahe hain
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.19.6'
           channel: 'stable'
 
       - name: Install Dependencies
