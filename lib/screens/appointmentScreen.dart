@@ -54,29 +54,31 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: <Widget>[
-                          const Column(
+                          Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              Row(
+                              const Row(
                                 children: <Widget>[
                                   Text(
                                     "John Doe ",
-                                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                    style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                   Icon(Icons.done, size: 15)
                                 ],
                               ),
-                              SizedBox(height: 5),
-                              Text("Assam, India", style: TextStyle(fontSize: 14)),
-                              SizedBox(height: 5),
+                              const SizedBox(height: 5),
+                              const Text("Assam, India", style: TextStyle(fontSize: 14)),
+                              const SizedBox(height: 5),
                               Row(
                                 children: <Widget>[
                                   for (int i = 0; i < 5; i++)
-                                    Icon(Icons.star, size: 17)
+                                    const Icon(Icons.star, size: 17)
                                 ],
                               ),
-                              SizedBox(height: 7),
+                              const SizedBox(height: 7),
                             ],
                           ),
                           const SizedBox(width: 50),
@@ -101,7 +103,10 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                       const SizedBox(height: 40),
                       const Text(
                         "Available Timings",
-                        style: TextStyle(color: Colors.black54, fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: Colors.black54,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 5),
                       Container(width: 55, color: Colors.black54, height: 3),
@@ -135,11 +140,17 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                                     children: <Widget>[
                                       Text(
                                         '09:00',
-                                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w500),
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w500),
                                       ),
                                       Text(
                                         'AM',
-                                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w500),
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w500),
                                       ),
                                     ],
                                   ),
@@ -152,7 +163,10 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                       const SizedBox(height: 20),
                       const Text(
                         "Services",
-                        style: TextStyle(color: Colors.black54, fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: Colors.black54,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 5),
                       Container(width: 55, color: Colors.black54, height: 3),
@@ -163,15 +177,22 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                           children: <Widget>[
                             for (int i = 0; i < 2; i++)
                               const Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: <Widget>[
                                   Text(
                                     "Service Charge",
-                                    style: TextStyle(color: Colors.grey, fontSize: 18, fontWeight: FontWeight.w600),
+                                    style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600),
                                   ),
                                   Text(
                                     "\u20B9 300",
-                                    style: TextStyle(color: Colors.grey, fontSize: 18, fontWeight: FontWeight.w600),
+                                    style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -181,11 +202,17 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                               children: <Widget>[
                                 Text(
                                   "Total",
-                                  style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.w600),
+                                  style: TextStyle(
+                                      color: Colors.black87,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600),
                                 ),
                                 Text(
                                   "\u20B9 600",
-                                  style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.w600),
+                                  style: TextStyle(
+                                      color: Colors.black87,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600),
                                 ),
                               ],
                             ),
