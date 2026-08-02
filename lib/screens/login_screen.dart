@@ -12,6 +12,14 @@ class _LoginScreenState extends State<LoginScreen> {
   // Default selected role: Customer
   String _selectedRole = "Customer"; 
 
+  void _navigateToNextScreen() {
+    if (_selectedRole == "Customer") {
+      Navigator.pushReplacementNamed(context, '/');
+    } else {
+      Navigator.pushNamed(context, '/providerRegistration');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const Icon(Icons.build_circle, size: 80, color: Colors.orangeAccent),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 15),
               const Center(
                 child: Text(
                   "Assam Local Service",
@@ -48,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 25),
 
-              // 🔴 2 Types of Login Toggle (Customer / Provider)
+              // Account Type Toggle (Customer / Service Provider)
               const Text(
                 "Choose Account Type:",
                 style: TextStyle(color: Colors.white70, fontSize: 14),
@@ -129,6 +137,60 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
 
               const SizedBox(height: 25),
+
+              // 🔴 Google / Gmail Sign-In Button
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: Image.network(
+                    'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
+                    height: 22,
+                    errorBuilder: (context, error, stack) =>
+                        const Icon(Icons.g_mobiledata, color: Colors.red, size: 30),
+                  ),
+                  label: Text(
+                    "Continue with Gmail / Google",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueGrey[900],
+                    ),
+                  ),
+                  onPressed: () {
+                    // Gmail Login Action
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Google account linked for $_selectedRole!"),
+                      ),
+                    );
+                    _navigateToNextScreen();
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              Row(
+                children: const [
+                  Expanded(child: Divider(color: Colors.white24)),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Text("OR", style: TextStyle(color: Colors.white54)),
+                  ),
+                  Expanded(child: Divider(color: Colors.white24)),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // Phone Number Input
               TextField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
@@ -145,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 25),
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -158,13 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   onPressed: () {
                     if (_phoneController.text.isNotEmpty) {
-                      if (_selectedRole == "Customer") {
-                        // Customer goes directly to Category Screen
-                        Navigator.pushReplacementNamed(context, '/');
-                      } else {
-                        // Service Provider goes to Details/Registration Form Screen
-                        Navigator.pushNamed(context, '/providerRegistration');
-                      }
+                      _navigateToNextScreen();
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Kripya mobile number darj karein")),
