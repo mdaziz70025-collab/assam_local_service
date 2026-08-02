@@ -6,21 +6,23 @@ import 'package:provider/provider.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 class Mappage extends StatefulWidget {
+  const Mappage({Key? key}) : super(key: key);
+
   @override
   _MappageState createState() => _MappageState();
 }
 
 class _MappageState extends State<Mappage> {
   bool first = true;
-  MapDataProvider obj;
+  late MapDataProvider obj;
   bool loading = true;
 
   void getData() async {
-    obj = Provider.of<MapDataProvider>(context);
+    obj = Provider.of<MapDataProvider>(context, listen: false);
     print(obj);
     print(obj.mapDataList);
     bool l = await obj.loadData();
-    if (l) {
+    if (l && mounted) {
       setState(() {
         loading = false;
       });
@@ -36,7 +38,7 @@ class _MappageState extends State<Mappage> {
     return SafeArea(
       child: Scaffold(
         body: loading
-            ? Center(
+            ? const Center(
                 child: CupertinoActivityIndicator(),
               )
             : MapBody(obj),
@@ -47,29 +49,34 @@ class _MappageState extends State<Mappage> {
 
 // ignore: must_be_immutable
 class MapBody extends StatefulWidget {
-  MapDataProvider obj;
-  MapBody(this.obj);
+  final MapDataProvider obj;
+  const MapBody(this.obj, {Key? key}) : super(key: key);
+
   @override
-  _MapBodyState createState() => _MapBodyState(obj);
+  _MapBodyState createState() => _MapBodyState();
 }
 
 class _MapBodyState extends State<MapBody> {
-  MapDataProvider obj;
-  _MapBodyState(this.obj);
+  late MapDataProvider obj;
+  final PanelController _pc = PanelController();
 
-  PanelController _pc = new PanelController();
-
-  MapType _mapType = MapType.normal;
+  final MapType _mapType = MapType.normal;
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
-  CameraPosition _kInitialPosition = const CameraPosition(
+  static const CameraPosition _kInitialPosition = CameraPosition(
     target: LatLng(12.922270, 77.584290),
     zoom: 16.0,
   );
 
-  BorderRadiusGeometry radius = BorderRadius.only(
+  BorderRadiusGeometry radius = const BorderRadius.only(
     topLeft: Radius.circular(24.0),
     topRight: Radius.circular(24.0),
   );
+
+  @override
+  void initState() {
+    super.initState();
+    obj = widget.obj;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,11 +87,10 @@ class _MapBodyState extends State<MapBody> {
         List cd = obj.mapDataList[i].location.split(",");
         LatLng markerPos = LatLng(double.parse(cd[0]), double.parse(cd[1]));
         final Marker marker = Marker(
-            icon:
-                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
             markerId: markerId,
             infoWindow: InfoWindow(
-              title: "${obj.mapDataList[i].name}",
+              title: obj.mapDataList[i].name,
               snippet: "Rating: ${obj.mapDataList[i].rating}",
             ),
             position: markerPos);
@@ -95,7 +101,7 @@ class _MapBodyState extends State<MapBody> {
 
     return SlidingUpPanel(
       controller: _pc,
-      color: Colors.blueGrey[900],
+      color: Colors.blueGrey[900]!,
       backdropEnabled: true,
       backdropColor: Colors.transparent,
       backdropOpacity: 0,
@@ -107,14 +113,14 @@ class _MapBodyState extends State<MapBody> {
         },
         child: Container(
           decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(40.0),
                   topLeft: Radius.circular(40.0)),
               color: Colors.blueGrey[900]),
           child: Column(
             children: <Widget>[
               Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                     borderRadius: BorderRadius.only(
                         topRight: Radius.circular(40.0),
                         topLeft: Radius.circular(40.0)),
@@ -123,10 +129,10 @@ class _MapBodyState extends State<MapBody> {
               ),
               Container(
                 color: Colors.blueGrey[900],
-                child: Row(
+                child: const Row(
                   children: <Widget>[
                     Padding(
-                      padding: const EdgeInsets.all(20),
+                      padding: EdgeInsets.all(20),
                       child: Icon(
                         Icons.keyboard_arrow_up,
                         color: Colors.white70,
@@ -168,7 +174,7 @@ class _MapBodyState extends State<MapBody> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
                 borderRadius: BorderRadius.only(
                     topRight: Radius.circular(40.0),
                     topLeft: Radius.circular(40.0)),
@@ -180,14 +186,14 @@ class _MapBodyState extends State<MapBody> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
+                const Text(
                   "Nearby Barbers",
                   style: TextStyle(
                     fontSize: 22,
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 10,
                 ),
                 Container(
@@ -195,7 +201,7 @@ class _MapBodyState extends State<MapBody> {
                   color: Colors.white38,
                   height: 4,
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 10,
                 ),
                 Container(
@@ -213,7 +219,7 @@ class _MapBodyState extends State<MapBody> {
                   itemCount: obj.mapDataList.length,
                   itemBuilder: (BuildContext ctxt, int index) {
                     return Card(
-                      margin: EdgeInsets.only(bottom: 20),
+                      margin: const EdgeInsets.only(bottom: 20),
                       shadowColor: Colors.white,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20.0)),
@@ -224,12 +230,12 @@ class _MapBodyState extends State<MapBody> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: <Widget>[
-                            CircleAvatar(
+                            const CircleAvatar(
                               radius: 25,
                               backgroundImage: NetworkImage(
                                   'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1868&q=80'),
                             ),
-                            SizedBox(
+                            const SizedBox(
                               width: 10,
                             ),
                             Expanded(
@@ -239,13 +245,13 @@ class _MapBodyState extends State<MapBody> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
                                   Text(
-                                    'John Doe',
-                                    style: TextStyle(
+                                    obj.mapDataList[index].name,
+                                    style: const TextStyle(
                                         fontSize: 23.0,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white),
                                   ),
-                                  Text(
+                                  const Text(
                                     'Thane',
                                     style: TextStyle(
                                         fontSize: 20.0,
@@ -260,13 +266,13 @@ class _MapBodyState extends State<MapBody> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
                                 Text(
-                                  '3.6',
-                                  style: TextStyle(
+                                  obj.mapDataList[index].rating.toString(),
+                                  style: const TextStyle(
                                       fontSize: 23.0,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white),
                                 ),
-                                Text(
+                                const Text(
                                   'mtrs.',
                                   style: TextStyle(
                                       fontSize: 20.0,
@@ -302,24 +308,23 @@ class _MapBodyState extends State<MapBody> {
             right: 15,
             bottom: 30,
             child: Column(
-              //mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: <Widget>[
                 FloatingActionButton(
                   backgroundColor: Colors.white,
                   elevation: 15,
-                  child: Icon(
+                  child: const Icon(
                     Icons.tune,
                     color: Colors.black,
                   ),
                   onPressed: () {},
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 10,
                 ),
                 FloatingActionButton(
                   backgroundColor: Colors.white,
                   elevation: 15,
-                  child: Icon(
+                  child: const Icon(
                     Icons.my_location,
                     color: Colors.black,
                   ),
@@ -335,7 +340,7 @@ class _MapBodyState extends State<MapBody> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.0)),
               color: Colors.white,
-              child: Container(
+              child: SizedBox(
                 height: 70,
                 width: double.infinity,
                 child: Row(
@@ -343,7 +348,7 @@ class _MapBodyState extends State<MapBody> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: <Widget>[
                     IconButton(
-                      icon: Icon(
+                      icon: const Icon(
                         Icons.menu,
                         size: 30,
                         color: Colors.black,
@@ -351,20 +356,20 @@ class _MapBodyState extends State<MapBody> {
                       onPressed: () {},
                     ),
                     Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                           borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                          color: Colors.grey[200]),
-                      margin: EdgeInsets.fromLTRB(0, 15, 0, 15),
-                      padding: EdgeInsets.all(10),
+                          color: Color(0xFFEEEEEE)),
+                      margin: const EdgeInsets.fromLTRB(0, 15, 0, 15),
+                      padding: const EdgeInsets.all(10),
                       height: 50,
                       width: MediaQuery.of(context).devicePixelRatio * 100,
-                      child: Text(
+                      child: const Text(
                         "Search Here ...",
                         style: TextStyle(color: Colors.grey, fontSize: 18),
                       ),
                     ),
                     IconButton(
-                      icon: Icon(
+                      icon: const Icon(
                         Icons.clear,
                         color: Colors.black,
                         size: 30,
