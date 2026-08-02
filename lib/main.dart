@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'Provider/map_data_provider.dart';
+import 'screens/category_screen.dart';
 import 'screens/mapsScreen.dart';
+import 'screens/appointmentScreen.dart';
 import 'screens/bookingScreen.dart';
 
 void main() {
@@ -25,10 +27,12 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
+        // Pehle Category Screen dikhegi jisse baki saare options aayein
         initialRoute: '/',
         routes: {
-          '/': (context) => Mappage(),
-          '/mappage': (context) => Mappage(),
+          '/': (context) => const CategoryScreen(),
+          '/mappage': (context) => const Mappage(),
+          '/appointmentScreen': (context) => const AppointmentScreen(),
           '/bookingScreen': (context) => const BookingScreen(),
         },
       ),
