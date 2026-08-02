@@ -9,8 +9,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _phoneController = TextEditingController();
-  // Default selected role: Customer
-  String _selectedRole = "Customer"; 
+  String _selectedRole = "Customer";
 
   void _navigateToNextScreen() {
     if (_selectedRole == "Customer") {
@@ -18,6 +17,162 @@ class _LoginScreenState extends State<LoginScreen> {
     } else {
       Navigator.pushNamed(context, '/providerRegistration');
     }
+  }
+
+  // 🔴 1. Phone mein saved Google Accounts Dikhane Ka Modal Sheet
+  void _showGoogleAccountPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.blueGrey[800],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Choose an account",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white70),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const Text(
+                "to continue to Assam Local Service",
+                style: TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              const Divider(color: Colors.white24, height: 25),
+
+              // Mock Saved Google Account 1
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.orangeAccent,
+                  child: Text("A", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                ),
+                title: const Text("Abdul Aziz", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                subtitle: const Text("abdul.aziz@gmail.com", style: TextStyle(color: Colors.white60)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _performGoogleLogin("abdul.aziz@gmail.com");
+                },
+              ),
+
+              // Mock Saved Google Account 2
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.lightBlueAccent,
+                  child: Text("S", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                ),
+                title: const Text("Service User", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                subtitle: const Text("user.assam@gmail.com", style: TextStyle(color: Colors.white60)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _performGoogleLogin("user.assam@gmail.com");
+                },
+              ),
+
+              const Divider(color: Colors.white24),
+
+              // Option 2: Type Email & Password Manually
+              ListTile(
+                leading: const Icon(Icons.person_add_alt_1, color: Colors.orangeAccent),
+                title: const Text("Use another account / Type Gmail", style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showManualEmailPasswordDialog();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // 🔴 2. Manual Email & Password Input Dialog
+  void _showManualEmailPasswordDialog() {
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.blueGrey[800],
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text("Google / Gmail Login", style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: "Enter Gmail (e.g. example@gmail.com)",
+                  hintStyle: TextStyle(color: Colors.white38),
+                  prefixIcon: Icon(Icons.email, color: Colors.orangeAccent),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: "Enter Password",
+                  hintStyle: TextStyle(color: Colors.white38),
+                  prefixIcon: Icon(Icons.lock, color: Colors.orangeAccent),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("CANCEL", style: TextStyle(color: Colors.white60)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent),
+              onPressed: () {
+                if (emailController.text.isNotEmpty && passwordController.text.isNotEmpty) {
+                  Navigator.pop(context);
+                  _performGoogleLogin(emailController.text);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Email aur Password dono bharein")),
+                  );
+                }
+              },
+              child: const Text("LOGIN", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _performGoogleLogin(String email) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Logged in with $email as $_selectedRole!"),
+      ),
+    );
+    _navigateToNextScreen();
   }
 
   @override
@@ -138,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 25),
 
-              // 🔴 Google / Gmail Sign-In Button
+              // 🔴 Upgraded Google Sign-In Button
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -163,15 +318,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.blueGrey[900],
                     ),
                   ),
-                  onPressed: () {
-                    // Gmail Login Action
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("Google account linked for $_selectedRole!"),
-                      ),
-                    );
-                    _navigateToNextScreen();
-                  },
+                  onPressed: _showGoogleAccountPicker,
                 ),
               ),
 
