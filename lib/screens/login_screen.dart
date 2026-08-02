@@ -9,6 +9,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _phoneController = TextEditingController();
+  // Default selected role: Customer
+  String _selectedRole = "Customer"; 
 
   @override
   Widget build(BuildContext context) {
@@ -21,31 +23,111 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 50),
-              // App Logo Here
+              const SizedBox(height: 40),
+              // App Logo
               Center(
                 child: Image.asset(
                   'assets/logo.png',
-                  height: 140,
-                  width: 140,
+                  height: 120,
+                  width: 120,
                   errorBuilder: (context, error, stackTrace) =>
                       const Icon(Icons.build_circle, size: 80, color: Colors.orangeAccent),
                 ),
               ),
-              const SizedBox(height: 30),
-              const Text(
-                "Welcome to\nAssam Local Service",
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              const SizedBox(height: 20),
+              const Center(
+                child: Text(
+                  "Assam Local Service",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 25),
+
+              // 🔴 2 Types of Login Toggle (Customer / Provider)
               const Text(
-                "Apna mobile number daal kar login karein",
+                "Choose Account Type:",
                 style: TextStyle(color: Colors.white70, fontSize: 14),
               ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedRole = "Customer";
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _selectedRole == "Customer"
+                              ? Colors.orangeAccent
+                              : Colors.blueGrey[800],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: _selectedRole == "Customer"
+                                ? Colors.orangeAccent
+                                : Colors.white24,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "Customer",
+                            style: TextStyle(
+                              color: _selectedRole == "Customer"
+                                  ? Colors.black
+                                  : Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedRole = "Provider";
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _selectedRole == "Provider"
+                              ? Colors.orangeAccent
+                              : Colors.blueGrey[800],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: _selectedRole == "Provider"
+                                ? Colors.orangeAccent
+                                : Colors.white24,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "Service Provider",
+                            style: TextStyle(
+                              color: _selectedRole == "Provider"
+                                  ? Colors.black
+                                  : Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
               const SizedBox(height: 25),
               TextField(
                 controller: _phoneController,
@@ -76,16 +158,27 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   onPressed: () {
                     if (_phoneController.text.isNotEmpty) {
-                      Navigator.pushReplacementNamed(context, '/');
+                      if (_selectedRole == "Customer") {
+                        // Customer goes to Category Selection
+                        Navigator.pushReplacementNamed(context, '/');
+                      } else {
+                        // Service Provider messaging
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Provider Dashboard coming soon! Logged in as Provider."),
+                          ),
+                        );
+                        Navigator.pushReplacementNamed(context, '/');
+                      }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Kripya mobile number darj karein")),
                       );
                     }
                   },
-                  child: const Text(
-                    "CONTINUE / LOGIN",
-                    style: TextStyle(
+                  child: Text(
+                    "LOGIN AS ${_selectedRole.toUpperCase()}",
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
