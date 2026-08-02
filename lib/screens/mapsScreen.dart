@@ -19,8 +19,6 @@ class _MappageState extends State<Mappage> {
 
   void getData() async {
     obj = Provider.of<MapDataProvider>(context, listen: false);
-    print(obj);
-    print(obj.mapDataList);
     bool l = await obj.loadData();
     if (l && mounted) {
       setState(() {
@@ -35,22 +33,29 @@ class _MappageState extends State<Mappage> {
       first = false;
       getData();
     }
+
+    // Category Screen se aayi hui selected category ko capture kar rahe hain
+    final String selectedCategory =
+        (ModalRoute.of(context)?.settings.arguments as String?) ?? "Services";
+
     return SafeArea(
       child: Scaffold(
         body: loading
             ? const Center(
                 child: CupertinoActivityIndicator(),
               )
-            : MapBody(obj),
+            : MapBody(obj, selectedCategory: selectedCategory),
       ),
     );
   }
 }
 
-// ignore: must_be_immutable
 class MapBody extends StatefulWidget {
   final MapDataProvider obj;
-  const MapBody(this.obj, {Key? key}) : super(key: key);
+  final String selectedCategory;
+
+  const MapBody(this.obj, {Key? key, required this.selectedCategory})
+      : super(key: key);
 
   @override
   _MapBodyState createState() => _MapBodyState();
@@ -82,7 +87,6 @@ class _MapBodyState extends State<MapBody> {
   Widget build(BuildContext context) {
     void _onMapCreated(GoogleMapController controller) {
       for (int i = 0; i < obj.mapDataList.length; i++) {
-        print(obj.mapDataList[i]);
         final MarkerId markerId = MarkerId((markers.length + 1).toString());
         List cd = obj.mapDataList[i].location.split(",");
         LatLng markerPos = LatLng(double.parse(cd[0]), double.parse(cd[1]));
@@ -129,9 +133,9 @@ class _MapBodyState extends State<MapBody> {
               ),
               Container(
                 color: Colors.blueGrey[900],
-                child: const Row(
+                child: Row(
                   children: <Widget>[
-                    Padding(
+                    const Padding(
                       padding: EdgeInsets.all(20),
                       child: Icon(
                         Icons.keyboard_arrow_up,
@@ -143,16 +147,17 @@ class _MapBodyState extends State<MapBody> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
-                        Text(
+                        const Text(
                           "Explore Nearby",
                           style: TextStyle(
                             fontSize: 20,
                             color: Colors.white,
                           ),
                         ),
+                        // Dynamic Subtitle
                         Text(
-                          "Barbers",
-                          style: TextStyle(
+                          widget.selectedCategory,
+                          style: const TextStyle(
                             color: Colors.white70,
                           ),
                         ),
@@ -186,24 +191,21 @@ class _MapBodyState extends State<MapBody> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text(
-                  "Nearby Barbers",
-                  style: TextStyle(
+                // Dynamic Heading
+                Text(
+                  "Nearby ${widget.selectedCategory}",
+                  style: const TextStyle(
                     fontSize: 22,
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
                 Container(
                   width: 120,
                   color: Colors.white38,
                   height: 4,
                 ),
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
                 Container(
                   width: 80,
                   color: Colors.white38,
@@ -235,9 +237,7 @@ class _MapBodyState extends State<MapBody> {
                               backgroundImage: NetworkImage(
                                   'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1868&q=80'),
                             ),
-                            const SizedBox(
-                              width: 10,
-                            ),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 mainAxisAlignment:
@@ -252,7 +252,7 @@ class _MapBodyState extends State<MapBody> {
                                         color: Colors.white),
                                   ),
                                   const Text(
-                                    'Thane',
+                                    'Assam',
                                     style: TextStyle(
                                         fontSize: 20.0,
                                         fontWeight: FontWeight.normal,
@@ -318,9 +318,7 @@ class _MapBodyState extends State<MapBody> {
                   ),
                   onPressed: () {},
                 ),
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
                 FloatingActionButton(
                   backgroundColor: Colors.white,
                   elevation: 15,
@@ -347,13 +345,16 @@ class _MapBodyState extends State<MapBody> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: <Widget>[
+                    // Menu Icon par click karke Category Screen par wapas jane ka option
                     IconButton(
                       icon: const Icon(
                         Icons.menu,
                         size: 30,
                         color: Colors.black,
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/');
+                      },
                     ),
                     Container(
                       decoration: const BoxDecoration(
@@ -363,9 +364,9 @@ class _MapBodyState extends State<MapBody> {
                       padding: const EdgeInsets.all(10),
                       height: 50,
                       width: MediaQuery.of(context).devicePixelRatio * 100,
-                      child: const Text(
-                        "Search Here ...",
-                        style: TextStyle(color: Colors.grey, fontSize: 18),
+                      child: Text(
+                        "Search ${widget.selectedCategory} ...",
+                        style: const TextStyle(color: Colors.grey, fontSize: 16),
                       ),
                     ),
                     IconButton(
