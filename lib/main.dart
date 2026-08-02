@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'Provider/barber_data_from_map_provider.dart';
 import 'Provider/map_data_provider.dart';
 import 'screens/mapsScreen.dart';
 import 'screens/bookingScreen.dart';
@@ -16,22 +15,20 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<BarberDataFromMapProvider>(
-          create: (_) => BarberDataFromMapProvider()..loadData(),
-        ),
         ChangeNotifierProvider<MapDataProvider>(
-          create: (_) => MapDataProvider()..loadMapData(),
+          create: (_) => MapDataProvider()..loadData(),
         ),
       ],
       child: MaterialApp(
         title: 'Assam Local Service',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
         initialRoute: '/',
         routes: {
-          '/': (context) => const Mappage(),
-          '/mappage': (context) => const Mappage(),
+          '/': (context) => Mappage(),
+          '/mappage': (context) => Mappage(),
           '/bookingScreen': (context) => const BookingScreen(),
         },
       ),
