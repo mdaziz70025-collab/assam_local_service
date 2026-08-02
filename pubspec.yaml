@@ -12,13 +12,19 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Firebase Dependencies (For Genuine Google Login & Cloud Backup)
+  firebase_core: ^2.27.0
+  firebase_auth: ^4.17.8
+  google_sign_in: ^6.2.1
+  cloud_firestore: ^4.15.8
+
   # UI & Map Dependencies
   cupertino_icons: ^1.0.5
   google_maps_flutter: ^2.5.0
   provider: ^6.0.5
   shared_preferences: ^2.2.2
   cached_network_image: ^3.3.0
-  
+
   # Null Safety Supported Version for Sliding Up Panel
   sliding_up_panel:
     git:
