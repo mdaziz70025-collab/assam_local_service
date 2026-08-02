@@ -17,11 +17,11 @@ class CategoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blueGrey[900],
+      backgroundColor: Colors.blueGrey[900]!,
       appBar: AppBar(
         title: const Text("Local Services Assam", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
-        backgroundColor: Colors.blueGrey[900],
+        backgroundColor: Colors.blueGrey[900]!,
         elevation: 0,
       ),
       body: Padding(
@@ -55,7 +55,7 @@ class CategoryScreen extends StatelessWidget {
                       );
                     },
                     child: Card(
-                      color: Colors.blueGrey[800],
+                      color: Colors.blueGrey[800]!,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       elevation: 4,
                       child: Column(
@@ -64,11 +64,11 @@ class CategoryScreen extends StatelessWidget {
                           CircleAvatar(
                             radius: 28,
                             backgroundColor: (item["color"] as Color).withOpacity(0.2),
-                            child: Icon(item["icon"], color: item["color"], size: 30),
+                            child: Icon(item["icon"] as IconData, color: item["color"] as Color, size: 30),
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            item["name"],
+                            item["name"] as String,
                             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
                             textAlign: TextAlign.center,
                           ),
