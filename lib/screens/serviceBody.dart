@@ -75,7 +75,13 @@ class _ServiceBodyState extends State<ServiceBody> {
                 onTap: () {
                   setState(() {
                     _check[index] = !_check[index];
-                    _check[index] ? ++_quantity : --_quantity;
+                    if (_check[index]) {
+                      ++_quantity;
+                      _amount += price;
+                    } else {
+                      --_quantity;
+                      _amount -= price;
+                    }
                     _booking = _check.contains(true);
                   });
                 },
@@ -128,22 +134,45 @@ class _ServiceBodyState extends State<ServiceBody> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
-              Text(
-                '$_quantity Item Selected',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: _booking ? Colors.white : Colors.white54,
-                ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$_quantity Item Selected',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: _booking ? Colors.white : Colors.white54,
+                    ),
+                  ),
+                  if (_booking)
+                    Text(
+                      'Total: ₹ $_amount',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.blueAccent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                ],
               ),
               InkWell(
                 onTap: () {
                   if (_booking) {
-                    Navigator.pushNamed(context, '/appointmentScreen');
+                    Navigator.pushNamed(
+                      context, 
+                      '/appointmentScreen',
+                      arguments: {
+                        'category': widget.serviceCategory,
+                        'totalAmount': _amount,
+                        'itemCount': _quantity,
+                      }
+                    );
                   }
                 },
                 child: Card(
-                  color: _booking ? Colors.blueAccent : Colors.grey[850],
+                  color: _booking ? Colors.blueAccent : Colors.grey[850]!,
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.all(Radius.circular(10.0)),
                   ),
