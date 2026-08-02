@@ -47,7 +47,6 @@ class CategoryScreen extends StatelessWidget {
                   var item = categories[index];
                   return InkWell(
                     onTap: () {
-                      // Category Name ke sath Map screen par bhejta hai
                       Navigator.pushNamed(
                         context, 
                         '/mappage', 
