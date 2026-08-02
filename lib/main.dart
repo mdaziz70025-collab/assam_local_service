@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'Provider/map_data_provider.dart';
 import 'screens/login_screen.dart';
+import 'screens/provider_registration_screen.dart'; // 👈 Import added
 import 'screens/category_screen.dart';
 import 'screens/mapsScreen.dart';
 import 'screens/appointmentScreen.dart';
@@ -32,6 +33,7 @@ class MyApp extends StatelessWidget {
         initialRoute: '/login',
         routes: {
           '/login': (context) => const LoginScreen(),
+          '/providerRegistration': (context) => const ProviderRegistrationScreen(), // 👈 Route added
           '/': (context) => const CategoryScreen(),
           '/mappage': (context) => const Mappage(),
           '/appointmentScreen': (context) => const AppointmentScreen(),
