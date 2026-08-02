@@ -159,16 +159,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () {
                     if (_phoneController.text.isNotEmpty) {
                       if (_selectedRole == "Customer") {
-                        // Customer goes to Category Selection
+                        // Customer goes directly to Category Screen
                         Navigator.pushReplacementNamed(context, '/');
                       } else {
-                        // Service Provider messaging
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Provider Dashboard coming soon! Logged in as Provider."),
-                          ),
-                        );
-                        Navigator.pushReplacementNamed(context, '/');
+                        // Service Provider goes to Details/Registration Form Screen
+                        Navigator.pushNamed(context, '/providerRegistration');
                       }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
