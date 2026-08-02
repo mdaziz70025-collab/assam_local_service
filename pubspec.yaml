@@ -35,4 +35,5 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/logo.png
     - lib/Temporary_data/map_data.json
