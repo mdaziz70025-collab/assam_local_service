@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        // Pehle Category Screen dikhegi jisse baki saare options aayein
+        // Pehle Category Screen khulegi
         initialRoute: '/',
         routes: {
           '/': (context) => const CategoryScreen(),
