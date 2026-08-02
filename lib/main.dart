@@ -1,119 +1,108 @@
 import 'dart:async';
-import 'package:basp/Provider/map_data_provider.dart';
-import 'package:basp/screens/AppointmentScreen.dart';
-import 'package:basp/screens/bookingScreen.dart';
-import 'package:basp/screens/mapsScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'Provider/map_data_provider.dart';
+import 'screens/AppointmentScreen.dart';
+import 'screens/bookingScreen.dart';
+import 'screens/categoryScreen.dart';
+import 'screens/mapsScreen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key key}) : super(key: key);
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<MapDataProvider>(
-            create: (_) => MapDataProvider()),
+          create: (_) => MapDataProvider(),
+        ),
       ],
       child: MaterialApp(
-        title: "Barber App",
-
-        // --------------------- Add Theme Data ---------------------- //
-        // Add theme data here
+        title: "Assam Multi Service",
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          // Define the default brightness and colors.
           brightness: Brightness.dark,
           primaryColor: Colors.blueGrey[900],
-          accentColor: Colors.cyan[600],
-
-          // Define the default font family.
-
-          // Define the default TextTheme. Use this to specify the default
-          // text styling for headlines, titles, bodies of text, and more.
-          textTheme: TextTheme(
-            headline1: TextStyle(
-                fontSize: 25.0,
-                fontWeight: FontWeight.bold,
-                color: Colors.white),
-            headline2: TextStyle(fontSize: 20.0, fontWeight: FontWeight.normal),
-            headline6: TextStyle(fontSize: 20.0, fontStyle: FontStyle.normal),
-            bodyText2: TextStyle(
-              fontSize: 14.0,
-            ),
+          colorScheme: ColorScheme.dark(
+            primary: Colors.blueAccent,
+            secondary: Colors.cyan[600]!,
+            surface: Colors.blueGrey[900]!,
+          ),
+          scaffoldBackgroundColor: Colors.blueGrey[900],
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
           ),
         ),
-
-        // ------------------- Manage Routes ------------------- //
-        //Add new routes here
         routes: {
-          '/bookingScreen': (context) => BookingScreen(),
-          '/mappage': (context) => Mappage(),
-          '/appointmentScreen': (context) => AppointmentScreen(),
+          '/category': (context) => const CategoryScreen(),
+          '/mappage': (context) => const Mappage(),
+          '/bookingScreen': (context) => const BookingScreen(),
+          '/appointmentScreen': (context) => const AppointmentScreen(),
         },
-
-        home: SplashScreen(),
-        debugShowCheckedModeBanner: false,
+        home: const SplashScreen(),
       ),
     );
   }
 }
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({Key? key}) : super(key: key);
+
   @override
-  _SplashScreen createState() => _SplashScreen();
+  _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreen extends State<SplashScreen> {
-  // -------------- for start page
-  Widget defaultPage = Container();
-
-//------------ check if the user is using app for first time or not
-  void checkSharedPrefs() async {
-    var sharedPrefs = await SharedPreferences.getInstance();
-    if (sharedPrefs.containsKey("firstTime")) {
-      defaultPage = Container();
-    }
-  }
-
-//-------- initialize with a Timer that will push to new screen after few seconds
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    checkSharedPrefs();
-    Timer(Duration(seconds: 4), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (BuildContext context) => AppointmentScreen(),
-        ),
-      );
+    Timer(const Duration(seconds: 3), () {
+      // Splash screen ke baad Category Screen par navigate hoga
+      Navigator.of(context).pushReplacementNamed('/category');
     });
   }
 
-// ---------------- Splash Screen Widget
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // -------------------- temp background color can be changed.... in THEME DATA
       backgroundColor: Colors.blueGrey[900],
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          Image.asset(
-            "assets/splash_screen.gif",
-            height: (60 / 100) * MediaQuery.of(context).size.height,
-            width: MediaQuery.of(context).size.width,
+          const Icon(
+            Icons.handyman,
+            size: 100,
+            color: Colors.blueAccent,
           ),
-          CircularProgressIndicator(
-            strokeWidth: 4,
-            backgroundColor: Colors.amberAccent[400],
+          Column(
+            children: const [
+              Text(
+                "Assam All-in-One Services",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                "Electrician, Plumber, Carpenter, Barber & More",
+                style: TextStyle(color: Colors.white60, fontSize: 13),
+              ),
+            ],
+          ),
+          const CircularProgressIndicator(
+            strokeWidth: 3,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
           )
         ],
       ),
