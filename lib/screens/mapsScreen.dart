@@ -34,7 +34,6 @@ class _MappageState extends State<Mappage> {
       getData();
     }
 
-    // Category Screen se aayi hui selected category ko capture kar rahe hain
     final String selectedCategory =
         (ModalRoute.of(context)?.settings.arguments as String?) ?? "Services";
 
@@ -68,8 +67,8 @@ class _MapBodyState extends State<MapBody> {
   final MapType _mapType = MapType.normal;
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
   static const CameraPosition _kInitialPosition = CameraPosition(
-    target: LatLng(12.922270, 77.584290),
-    zoom: 16.0,
+    target: LatLng(26.1445, 91.7362), // Default location set to Assam region
+    zoom: 14.0,
   );
 
   BorderRadiusGeometry radius = const BorderRadius.only(
@@ -89,12 +88,13 @@ class _MapBodyState extends State<MapBody> {
       for (int i = 0; i < obj.mapDataList.length; i++) {
         final MarkerId markerId = MarkerId((markers.length + 1).toString());
         List cd = obj.mapDataList[i].location.split(",");
-        LatLng markerPos = LatLng(double.parse(cd[0]), double.parse(cd[1]));
+        LatLng markerPos = LatLng(
+            double.tryParse(cd[0]) ?? 26.1445, double.tryParse(cd[1]) ?? 91.7362);
         final Marker marker = Marker(
             icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
             markerId: markerId,
             infoWindow: InfoWindow(
-              title: obj.mapDataList[i].name,
+              title: "${widget.selectedCategory} Worker ${i + 1}",
               snippet: "Rating: ${obj.mapDataList[i].rating}",
             ),
             position: markerPos);
@@ -154,7 +154,6 @@ class _MapBodyState extends State<MapBody> {
                             color: Colors.white,
                           ),
                         ),
-                        // Dynamic Subtitle
                         Text(
                           widget.selectedCategory,
                           style: const TextStyle(
@@ -191,7 +190,6 @@ class _MapBodyState extends State<MapBody> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                // Dynamic Heading
                 Text(
                   "Nearby ${widget.selectedCategory}",
                   style: const TextStyle(
@@ -220,69 +218,80 @@ class _MapBodyState extends State<MapBody> {
               child: ListView.builder(
                   itemCount: obj.mapDataList.length,
                   itemBuilder: (BuildContext ctxt, int index) {
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 20),
-                      shadowColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20.0)),
-                      color: Colors.black,
-                      elevation: 1,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: <Widget>[
-                            const CircleAvatar(
-                              radius: 25,
-                              backgroundImage: NetworkImage(
-                                  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1868&q=80'),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
+                    return InkWell(
+                      onTap: () {
+                        // Card par click karne se booking/rate list screen par bhejta hai
+                        Navigator.pushNamed(
+                          context,
+                          '/appointmentScreen',
+                          arguments: widget.selectedCategory,
+                        );
+                      },
+                      child: Card(
+                        margin: const EdgeInsets.only(bottom: 20),
+                        shadowColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20.0)),
+                        color: Colors.black,
+                        elevation: 1,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: <Widget>[
+                              const CircleAvatar(
+                                radius: 25,
+                                backgroundImage: NetworkImage(
+                                    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1868&q=80'),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    // Dynamic Name for Selected Category
+                                    Text(
+                                      "${widget.selectedCategory} Service ${index + 1}",
+                                      style: const TextStyle(
+                                          fontSize: 18.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white),
+                                    ),
+                                    const Text(
+                                      'Assam, India',
+                                      style: TextStyle(
+                                          fontSize: 14.0,
+                                          fontWeight: FontWeight.normal,
+                                          color: Colors.white54),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
                                   Text(
-                                    obj.mapDataList[index].name,
+                                    obj.mapDataList[index].rating.toString(),
                                     style: const TextStyle(
-                                        fontSize: 23.0,
+                                        fontSize: 20.0,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white),
                                   ),
                                   const Text(
-                                    'Assam',
+                                    'mtrs.',
                                     style: TextStyle(
-                                        fontSize: 20.0,
+                                        fontSize: 14.0,
                                         fontWeight: FontWeight.normal,
+                                        fontStyle: FontStyle.italic,
                                         color: Colors.white54),
                                   ),
                                 ],
                               ),
-                            ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  obj.mapDataList[index].rating.toString(),
-                                  style: const TextStyle(
-                                      fontSize: 23.0,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
-                                ),
-                                const Text(
-                                  'mtrs.',
-                                  style: TextStyle(
-                                      fontSize: 20.0,
-                                      fontWeight: FontWeight.normal,
-                                      fontStyle: FontStyle.italic,
-                                      color: Colors.white54),
-                                ),
-                              ],
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     );
@@ -345,7 +354,6 @@ class _MapBodyState extends State<MapBody> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: <Widget>[
-                    // Menu Icon par click karke Category Screen par wapas jane ka option
                     IconButton(
                       icon: const Icon(
                         Icons.menu,
