@@ -50,3 +50,6 @@ flutter {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
+
+// 👈 Added at the bottom for Genuine Google Services & Firebase
+apply plugin: 'com.google.gms.google-services'
