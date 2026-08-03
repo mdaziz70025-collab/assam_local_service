@@ -22,6 +22,10 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
+      # Setup Android SDK Tools explicitly
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       # Setup Flutter Version 3.19.6
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -42,7 +46,7 @@ jobs:
           mkdir -p ~/.android
           keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" || true
 
-      # 🔴 Build Release APK with --no-shrink to prevent D8 bytecode transform crash
+      # Build Release APK
       - name: Build APK
         run: flutter build apk --release --no-shrink --no-tree-shake-icons
 
