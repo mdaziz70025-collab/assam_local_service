@@ -49,8 +49,12 @@ android {
     }
 }
 
+// 🔴 Explicit source mapping to fix "Must provide Flutter source directory"
+flutter {
+    source '../..'
+}
+
 dependencies {
-    // 🔴 Fixed: Explicitly using kotlin-stdlib version instead of $kotlin_version variable
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
     implementation 'androidx.multidex:multidex:2.0.1'
 
