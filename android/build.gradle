@@ -1,12 +1,12 @@
 buildscript {
-    ext.kotlin_version = '1.8.22'
+    ext.kotlin_version = '1.8.20'
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.0'
+        classpath 'com.android.tools.build:gradle:7.4.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.google.gms:google-services:4.4.0'
     }
@@ -16,6 +16,13 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+
+    // 🔴 FORCE LOWER SAFE VERSION OF FIREBASE AUTH (Bypasses D8 Recaptcha Crash)
+    configurations.all {
+        resolutionStrategy {
+            force 'com.google.firebase:firebase-auth:22.1.2'
+        }
     }
 }
 
