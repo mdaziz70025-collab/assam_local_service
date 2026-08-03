@@ -33,18 +33,13 @@ jobs:
       - name: Generate Launcher Icons
         run: flutter pub run flutter_launcher_icons
 
-      - name: Setup Fixed Keystore
-        run: |
-          mkdir -p ~/.android
-          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" || true
-
-      # 🔴 PRINT SHA-1 KEY FOR FIREBASE
-      - name: Print Keystore SHA-1
-        run: |
-          keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
-
       - name: Build APK
         run: flutter build apk --release --no-shrink --no-tree-shake-icons --build-number=1
+
+      # 🔴 EXTRACT REAL SHA-1 FROM THE FINISHED RELEASE APK
+      - name: Print Real APK SHA-1
+        run: |
+          keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
