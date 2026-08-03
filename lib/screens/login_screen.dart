@@ -21,21 +21,21 @@ class _LoginScreenState extends State<LoginScreen> {
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     serverClientId:
         '340401925302-44nli0ga73gq4mmlkq060mthsbbpu1lp.apps.googleusercontent.com',
-    scopes: <String>['email', 'profile'],
   );
 
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      // 1. Purani local cache/session clear karein
-      await _googleSignIn.signOut();
-      await _auth.signOut();
+      // 1. Silent Check: Agar account active hai toh bina kisi prompt/password ke direct login kar do
+      GoogleSignInAccount? googleUser = await _googleSignIn.signInSilently();
 
-      // 2. Open Google Native Account Picker
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      // 2. Agar silent login nahi hota, tabhi bottom-sheet picker kholo
+      if (googleUser == null) {
+        googleUser = await _googleSignIn.signIn();
+      }
 
       if (googleUser == null) {
-        // User ne cancel kiya
+        // User ne dialog cancel kar diya
         setState(() => _isLoading = false);
         return;
       }
@@ -198,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 25),
 
-                    // Google Login Button
+                    // 1-Tap Passwordless Google Login Button
                     SizedBox(
                       width: double.infinity,
                       height: 50,
