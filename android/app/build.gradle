@@ -50,7 +50,8 @@ android {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    // 🔴 Fixed: Explicitly using kotlin-stdlib version instead of $kotlin_version variable
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
     implementation 'androidx.multidex:multidex:2.0.1'
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
