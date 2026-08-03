@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "340401925302-6ouurken377opbc060pt2ieophat0v15.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.basp",
+            "certificate_hash": "1f1a1b898345c0b99a591c2dd3577a2481be0068"
+          }
+        },
+        {
           "client_id": "340401925302-aam4nsr9ohungl6a791vqclekruq7umo.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
