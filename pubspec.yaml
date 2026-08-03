@@ -12,11 +12,11 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Firebase Dependencies (Compatible & Standard Versions)
-  firebase_core: ^2.27.0
-  firebase_auth: ^4.17.8
+  # Firebase Dependencies (Stable compatible combo)
+  firebase_core: 2.24.2
+  firebase_auth: 4.16.0
   google_sign_in: ^6.2.1
-  cloud_firestore: ^4.15.8
+  cloud_firestore: 4.14.0
 
   # UI & Map Dependencies
   cupertino_icons: ^1.0.5
@@ -36,9 +36,8 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^2.0.0
-  flutter_launcher_icons: ^0.13.1 # App Icon Generator
+  flutter_launcher_icons: ^0.13.1
 
-# App Launcher Icon Settings
 flutter_launcher_icons:
   android: "ic_launcher"
   ios: true
