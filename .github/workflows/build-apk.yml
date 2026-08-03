@@ -35,9 +35,10 @@ jobs:
       - name: Generate Launcher Icons
         run: flutter pub run flutter_launcher_icons
 
-      # 🔴 ADDED: Print SHA-1 Fingerprint (Google Sign-In Fix)
+      # 🔴 Fixed: Executable permission di hai gradlew file ko
       - name: Get Build SHA-1 Key
         run: |
+          chmod +x android/gradlew
           cd android
           ./gradlew signingReport
 
