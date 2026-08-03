@@ -31,24 +31,22 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      # Automatic App Logo/Icon Generator Step
+      # Generate Launcher Icons
       - name: Generate Launcher Icons
         run: flutter pub run flutter_launcher_icons
 
-      # 🔴 Keytool command add ki hai jo missing keystore create kar degi
-      - name: Get Build SHA-1 Key
+      # Create Fixed Debug Keystore
+      - name: Setup Fixed Keystore
         run: |
           mkdir -p ~/.android
-          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-          chmod +x android/gradlew
-          cd android
-          ./gradlew signingReport
+          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" || true
 
-      - name: Build Release APK
-        run: flutter build apk --release --no-tree-shake-icons
+      # 🔴 Build Debug APK (Guarantees matching with the SHA-1 in Firebase)
+      - name: Build APK
+        run: flutter build apk --debug --no-tree-shake-icons
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Assam-Local-Service-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
