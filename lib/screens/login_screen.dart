@@ -17,30 +17,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // 🔴 Web Client ID from google-services.json
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    serverClientId:
-        '340401925302-44nli0ga73gq4mmlkq060mthsbbpu1lp.apps.googleusercontent.com',
-  );
-
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      // 1. Silent Check: Agar account active hai toh bina kisi prompt/password ke direct login kar do
-      GoogleSignInAccount? googleUser = await _googleSignIn.signInSilently();
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        serverClientId:
+            '340401925302-44nli0ga73gq4mmlkq060mthsbbpu1lp.apps.googleusercontent.com',
+      );
 
-      // 2. Agar silent login nahi hota, tabhi bottom-sheet picker kholo
-      if (googleUser == null) {
-        googleUser = await _googleSignIn.signIn();
-      }
+      // Purani stale session clear karein
+      await googleSignIn.signOut();
+      await _auth.signOut();
+
+      // Trigger Account Selector
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
       if (googleUser == null) {
-        // User ne dialog cancel kar diya
         setState(() => _isLoading = false);
         return;
       }
 
-      // 3. Obtain authentication details
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
@@ -49,7 +45,6 @@ class _LoginScreenState extends State<LoginScreen> {
         idToken: googleAuth.idToken,
       );
 
-      // 4. Firebase Authentication Sign In
       UserCredential userCredential =
           await _auth.signInWithCredential(credential);
       User? user = userCredential.user;
@@ -70,13 +65,10 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (e) {
-      await _googleSignIn.signOut();
-      await _auth.signOut();
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Login Error: ${e.toString()}"),
+            content: Text("Google Login Error: ${e.toString()}"),
             backgroundColor: Colors.redAccent,
             duration: const Duration(seconds: 6),
           ),
@@ -132,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 30),
 
-                    // Role Selector
+                    // Role Selection
                     const Text(
                       "Choose Account Type:",
                       style: TextStyle(color: Colors.white70, fontSize: 14),
@@ -198,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 25),
 
-                    // 1-Tap Passwordless Google Login Button
+                    // Google Login Button
                     SizedBox(
                       width: double.infinity,
                       height: 50,
