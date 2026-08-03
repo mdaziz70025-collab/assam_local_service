@@ -32,4 +32,4 @@ jobs:
         run: dart run flutter_launcher_icons
 
       - name: Build Android Release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --no-tree-shake-icons
