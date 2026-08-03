@@ -35,9 +35,11 @@ jobs:
       - name: Generate Launcher Icons
         run: flutter pub run flutter_launcher_icons
 
-      # 🔴 Fixed: Executable permission di hai gradlew file ko
+      # 🔴 Keytool command add ki hai jo missing keystore create kar degi
       - name: Get Build SHA-1 Key
         run: |
+          mkdir -p ~/.android
+          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           chmod +x android/gradlew
           cd android
           ./gradlew signingReport
