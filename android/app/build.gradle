@@ -28,7 +28,7 @@ apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 android {
     compileSdkVersion 34
 
-    // 🔴 Core Library Desugaring Support (Fixes D8 / Dexing Error)
+    // 🔴 Core Library Desugaring & Java 8 Support (Fixes D8 / mergeExtDexRelease Error)
     compileOptions {
         coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -52,6 +52,7 @@ android {
 
     buildTypes {
         release {
+            // 🔴 Forces Release APK to use Debug Key (Matches SHA-1 in Firebase)
             signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
@@ -66,9 +67,10 @@ flutter {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.multidex:multidex:2.0.1'
-    
-    // 🔴 Added Desugaring Tool Dependency (Required for Firebase Auth & Recaptcha)
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+
+    // 🔴 Core Library Desugaring Tool (Required for Firebase Auth & Recaptcha)
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
 }
 
+// Added at the bottom for Genuine Google Services & Firebase
 apply plugin: 'com.google.gms.google-services'
