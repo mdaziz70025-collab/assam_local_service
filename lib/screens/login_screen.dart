@@ -16,30 +16,40 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // 🔴 Updated Web Client ID (Match with latest google-services.json)
+  // 🔴 Web Client ID + Explicit Scopes for Smooth Auth Flow
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     serverClientId: '340401925302-44nli0ga73gq4mmlkq060mthsbbpu1lp.apps.googleusercontent.com',
+    scopes: <String>[
+      'email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+    ],
   );
 
   Future<void> _handleOriginalGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      // Sign out existing session to force account picker
+      // Step 1: Purani session clean karein taaki loopback issue na ho
+      await _auth.signOut();
       await _googleSignIn.signOut();
 
+      // Step 2: Fresh Google Account Picker trigger karein
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser != null) {
-        final GoogleSignInAuthentication googleAuth =
-            await googleUser.authentication;
+        // Step 3: Auth Details & Tokens fetch karein
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+        if (googleAuth.idToken == null) {
+          throw Exception("Google ID Token null mila. Kripya dubara try karein.");
+        }
 
         final AuthCredential credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         );
 
-        UserCredential userCredential =
-            await _auth.signInWithCredential(credential);
+        // Step 4: Firebase Credentials verify karein
+        UserCredential userCredential = await _auth.signInWithCredential(credential);
         User? user = userCredential.user;
 
         if (user != null && mounted) {
@@ -48,12 +58,14 @@ class _LoginScreenState extends State<LoginScreen> {
               content: Text(
                 "Welcome ${user.displayName ?? 'User'}! Logged in as $_selectedRole.",
               ),
+              backgroundColor: Colors.green,
             ),
           );
           _navigateToNextScreen();
         }
       }
     } catch (e) {
+      await _googleSignIn.signOut();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
