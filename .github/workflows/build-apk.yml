@@ -27,7 +27,6 @@ jobs:
           flutter-version: '3.19.6'
           channel: 'stable'
 
-      # pub get triggers flutter root path resolution
       - name: Install Dependencies
         run: flutter pub get
 
@@ -39,8 +38,9 @@ jobs:
           mkdir -p ~/.android
           keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" || true
 
+      # Build Release APK with memory optimization
       - name: Build APK
-        run: flutter build apk --release --no-shrink --no-tree-shake-icons
+        run: flutter build apk --release --no-shrink --no-tree-shake-icons --build-number=1
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
