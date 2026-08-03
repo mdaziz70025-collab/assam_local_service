@@ -12,11 +12,11 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Firebase Dependencies (For Genuine Google Login & Cloud Backup)
-  firebase_core: ^2.27.0
-  firebase_auth: ^4.17.8
+  # Firebase Dependencies (Stable versions to fix D8 Dexing Engine Crash)
+  firebase_core: 2.27.0
+  firebase_auth: 4.15.0  # 🔴 Fixed D8 Dexing Error version
   google_sign_in: ^6.2.1
-  cloud_firestore: ^4.15.8
+  cloud_firestore: 4.15.5
 
   # UI & Map Dependencies
   cupertino_icons: ^1.0.5
@@ -36,9 +36,9 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^2.0.0
-  flutter_launcher_icons: ^0.13.1 # 👈 Added for Home Screen App Icon
+  flutter_launcher_icons: ^0.13.1 # App Icon Generator
 
-# 🔴 App Launcher Icon Settings
+# App Launcher Icon Settings
 flutter_launcher_icons:
   android: "ic_launcher"
   ios: true
