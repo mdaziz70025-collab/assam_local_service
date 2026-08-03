@@ -15,18 +15,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Setup Java JDK 17
+      # Clear local runner Gradle caches to remove broken dex transforms
+      - name: Clear Gradle Cache
+        run: rm -rf ~/.gradle/caches/
+
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      # Setup Android SDK Tools explicitly
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      # Setup Flutter Version 3.19.6
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -36,22 +34,13 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      # Generate Launcher Icons
       - name: Generate Launcher Icons
         run: flutter pub run flutter_launcher_icons
 
-      # Create Fixed Debug Keystore
       - name: Setup Fixed Keystore
         run: |
           mkdir -p ~/.android
           keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" || true
 
-      # Build Release APK
       - name: Build APK
-        run: flutter build apk --release --no-shrink --no-tree-shake-icons
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Assam-Local-Service-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+        run: flutter build apk --release --no-tree-shake-icons
