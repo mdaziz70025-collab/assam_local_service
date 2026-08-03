@@ -31,9 +31,15 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      # 🔴 Added: Automatic App Logo/Icon Generator Step
+      # Automatic App Logo/Icon Generator Step
       - name: Generate Launcher Icons
         run: flutter pub run flutter_launcher_icons
+
+      # 🔴 ADDED: Print SHA-1 Fingerprint (Google Sign-In Fix)
+      - name: Get Build SHA-1 Key
+        run: |
+          cd android
+          ./gradlew signingReport
 
       - name: Build Release APK
         run: flutter build apk --release --no-tree-shake-icons
