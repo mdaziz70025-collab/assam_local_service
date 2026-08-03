@@ -1,292 +1,119 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _phoneController = TextEditingController();
-  String _selectedRole = "Customer";
   bool _isLoading = false;
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId:
+        '340401925302-44nli0ga73gq4mmlkq060mthsbbpu1lp.apps.googleusercontent.com',
+    clientId:
+        '340401925302-6ouurken377opbc060pt2ieophat0v15.apps.googleusercontent.com',
+    scopes: <String>['email', 'profile'],
+  );
 
-  Future<void> _handleGoogleSignIn() async {
+  Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn(
-        serverClientId:
-            '340401925302-44nli0ga73gq4mmlkq060mthsbbpu1lp.apps.googleusercontent.com',
-      );
-
-      // Purani stale session clear karein
-      await googleSignIn.signOut();
-      await _auth.signOut();
-
-      // Trigger Account Selector
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      await _googleSignIn.signOut();
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
-        setState(() => _isLoading = false);
+        if (mounted) setState(() => _isLoading = false);
         return;
       }
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      final AuthCredential credential = GoogleAuthProvider.credential(
+      final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      UserCredential userCredential =
-          await _auth.signInWithCredential(credential);
-      User? user = userCredential.user;
+      await FirebaseAuth.instance.signInWithCredential(credential);
 
-      if (user != null && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Welcome ${user.displayName ?? 'User'}!"),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // Direct Home Screen Navigation
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Google Login Error: ${e.toString()}"),
-            backgroundColor: Colors.redAccent,
-            duration: const Duration(seconds: 6),
-          ),
-        );
-      }
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/home');
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Google Sign-In failed: ${error.toString()}"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blueGrey[900]!,
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.orangeAccent),
-            )
-          : Padding(
-              padding: const EdgeInsets.all(25.0),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 50),
-                    Center(
-                      child: Image.asset(
-                        'assets/logo.png',
-                        height: 120,
-                        width: 120,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(
-                          Icons.build_circle,
-                          size: 80,
-                          color: Colors.orangeAccent,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    const Center(
-                      child: Text(
-                        "Assam Local Service",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-
-                    // Role Selection
-                    const Text(
-                      "Choose Account Type:",
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedRole = "Customer"),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: _selectedRole == "Customer"
-                                    ? Colors.orangeAccent
-                                    : Colors.blueGrey[800],
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  "Customer",
-                                  style: TextStyle(
-                                    color: _selectedRole == "Customer"
-                                        ? Colors.black
-                                        : Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedRole = "Provider"),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: _selectedRole == "Provider"
-                                    ? Colors.orangeAccent
-                                    : Colors.blueGrey[800],
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  "Service Provider",
-                                  style: TextStyle(
-                                    color: _selectedRole == "Provider"
-                                        ? Colors.black
-                                        : Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 25),
-
-                    // Google Login Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: Image.network(
-                          'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
-                          height: 22,
-                          errorBuilder: (context, error, stack) =>
-                              const Icon(Icons.g_mobiledata, color: Colors.red),
-                        ),
-                        label: Text(
-                          "Continue with Gmail / Google",
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blueGrey[900],
-                          ),
-                        ),
-                        onPressed: _handleGoogleSignIn,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    Row(
-                      children: const [
-                        Expanded(child: Divider(color: Colors.white24)),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 10),
-                          child: Text("OR",
-                              style: TextStyle(color: Colors.white54)),
-                        ),
-                        Expanded(child: Divider(color: Colors.white24)),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    TextField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: "Enter Mobile Number",
-                        hintStyle: const TextStyle(color: Colors.white38),
-                        prefixIcon: const Icon(Icons.phone,
-                            color: Colors.orangeAccent),
-                        filled: true,
-                        fillColor: Colors.blueGrey[800]!,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orangeAccent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () {
-                          if (_phoneController.text.isNotEmpty) {
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const HomeScreen()),
-                              (route) => false,
-                            );
-                          }
-                        },
-                        child: Text(
-                          "LOGIN AS ${_selectedRole.toUpperCase()}",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+      backgroundColor: Colors.blueGrey[900],
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.storefront_rounded,
+                size: 80,
+                color: Colors.orangeAccent,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "Assam Local Service",
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
-            ),
+              const SizedBox(height: 8),
+              const Text(
+                "Find local services near you easily",
+                style: TextStyle(color: Colors.white60, fontSize: 14),
+              ),
+              const SizedBox(height: 40),
+              _isLoading
+                  ? const CircularProgressIndicator(color: Colors.orangeAccent)
+                  : SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.g_mobiledata, size: 30),
+                        label: const Text(
+                          "Sign in with Google",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        onPressed: _signInWithGoogle,
+                      ),
+                    ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
