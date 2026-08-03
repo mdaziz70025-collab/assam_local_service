@@ -27,6 +27,8 @@ apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
     compileSdkVersion 34
+    // 🔴 Force Build Tools to 34.0.0 to fix D8 Dexing Engine
+    buildToolsVersion "34.0.0"
 
     compileOptions {
         coreLibraryDesugaringEnabled true
