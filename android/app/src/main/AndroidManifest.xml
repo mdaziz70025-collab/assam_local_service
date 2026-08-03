@@ -9,7 +9,8 @@
     <application
         android:label="Assam Local Service"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher">
 
         <!-- Google Maps API Key -->
         <meta-data 
