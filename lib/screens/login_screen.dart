@@ -16,62 +16,62 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // 🔴 Web Client ID + Explicit Scopes for Smooth Auth Flow
+  // 🔴 Web Client ID + Native Account Picker Setup
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     serverClientId: '340401925302-44nli0ga73gq4mmlkq060mthsbbpu1lp.apps.googleusercontent.com',
-    scopes: <String>[
-      'email',
-      'https://www.googleapis.com/auth/userinfo.profile',
-    ],
   );
 
   Future<void> _handleOriginalGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      // Step 1: Purani session clean karein taaki loopback issue na ho
-      await _auth.signOut();
-      await _googleSignIn.signOut();
+      // 1. Silent check: Agar phone par account already linked hai toh direct login kar do
+      GoogleSignInAccount? googleUser = await _googleSignIn.signInSilently();
 
-      // Step 2: Fresh Google Account Picker trigger karein
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      // 2. Agar silent login nahi hua toh direct Native Account Selector Pop-up kholo
+      if (googleUser == null) {
+        googleUser = await _googleSignIn.signIn();
+      }
 
-      if (googleUser != null) {
-        // Step 3: Auth Details & Tokens fetch karein
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      if (googleUser == null) {
+        // User ne cancel kar diya
+        setState(() => _isLoading = false);
+        return;
+      }
 
-        if (googleAuth.idToken == null) {
-          throw Exception("Google ID Token null mila. Kripya dubara try karein.");
-        }
+      // 3. Tokens Fetch Karein
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
-        final AuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
 
-        // Step 4: Firebase Credentials verify karein
-        UserCredential userCredential = await _auth.signInWithCredential(credential);
-        User? user = userCredential.user;
+      // 4. Firebase Authentication
+      UserCredential userCredential = await _auth.signInWithCredential(credential);
+      User? user = userCredential.user;
 
-        if (user != null && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                "Welcome ${user.displayName ?? 'User'}! Logged in as $_selectedRole.",
-              ),
-              backgroundColor: Colors.green,
+      if (user != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Welcome ${user.displayName ?? 'User'}! Logged in as $_selectedRole.",
             ),
-          );
-          _navigateToNextScreen();
-        }
+            backgroundColor: Colors.green,
+          ),
+        );
+        _navigateToNextScreen();
       }
     } catch (e) {
+      // Security Exception Aane par session clear karo
       await _googleSignIn.signOut();
+      await _auth.signOut();
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Google Login Error: ${e.toString()}"),
             backgroundColor: Colors.redAccent,
-            duration: const Duration(seconds: 5),
+            duration: const Duration(seconds: 6),
           ),
         );
       }
