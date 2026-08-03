@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.orange,
         scaffoldBackgroundColor: const Color(0xFF263238),
       ),
-      // Active Session Check: Agar user pehle se logged in hai toh direct Home Screen par bhejega
+      // Auth State Check: Pehle se logged-in user direct Home Screen par jayega
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
