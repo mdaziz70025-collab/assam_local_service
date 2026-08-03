@@ -15,8 +15,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Clear stale runner caches
-      - name: Clear Gradle Cache
+      # Clean cached broken transforms
+      - name: Clean Gradle Cache
         run: rm -rf ~/.gradle/caches/
 
       - name: Setup Java JDK
@@ -42,7 +42,6 @@ jobs:
           mkdir -p ~/.android
           keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" || true
 
-      # Build APK passing --no-shrink flag
       - name: Build APK
         run: flutter build apk --release --no-shrink --no-tree-shake-icons
 
