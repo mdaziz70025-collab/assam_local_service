@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart'; // 👈 Firebase Core Import
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'Provider/map_data_provider.dart';
 import 'screens/login_screen.dart';
@@ -8,12 +8,10 @@ import 'screens/category_screen.dart';
 import 'screens/mapsScreen.dart';
 import 'screens/appointmentScreen.dart';
 import 'screens/bookingScreen.dart';
+import 'screens/profile_screen.dart'; // 👈 Profile Screen Import Added
 
 void main() async {
-  // Flutter engine initialization
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // 🔴 Genuine Firebase Initialization
   await Firebase.initializeApp();
 
   runApp(const MyApp());
@@ -36,7 +34,6 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        // App khulte hi Login Screen dikhegi
         initialRoute: '/login',
         routes: {
           '/login': (context) => const LoginScreen(),
@@ -45,6 +42,7 @@ class MyApp extends StatelessWidget {
           '/mappage': (context) => const Mappage(),
           '/appointmentScreen': (context) => const AppointmentScreen(),
           '/bookingScreen': (context) => const BookingScreen(),
+          '/profile': (context) => const ProfileScreen(), // 👈 Added Profile Route
         },
       ),
     );
