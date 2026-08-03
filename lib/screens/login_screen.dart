@@ -15,17 +15,21 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  // 🔴 Original Real Google Sign-In Function
+  // 🔴 Web Client ID explicitly pass kar rahe hain (Error 10 Fix)
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: '340401925302-diarjh7uf71dteloglctsg3p5t6mj7bu.apps.googleusercontent.com',
+  );
+
   Future<void> _handleOriginalGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      // 1. Original Google Account Chooser Trigger
+      // Sign out existing session to force account picker
+      await _googleSignIn.signOut();
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser != null) {
-        // 2. Fetch Authentication Tokens
         final GoogleSignInAuthentication googleAuth =
             await googleUser.authentication;
 
@@ -34,7 +38,6 @@ class _LoginScreenState extends State<LoginScreen> {
           idToken: googleAuth.idToken,
         );
 
-        // 3. Real Firebase Authentication
         UserCredential userCredential =
             await _auth.signInWithCredential(credential);
         User? user = userCredential.user;
@@ -56,6 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
           SnackBar(
             content: Text("Google Login Error: ${e.toString()}"),
             backgroundColor: Colors.redAccent,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -193,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 25),
 
-                    // 🔴 Genuine Google Sign-In Button
+                    // Google Sign In Button
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -239,7 +243,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 20),
 
-                    // Phone Number Field
                     TextField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
