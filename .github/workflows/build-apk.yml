@@ -21,7 +21,7 @@ jobs:
           distribution: 'zulu'
           java-version: '11'
 
-      # Flutter version ko 3.19.6 par lock kar rahe hain
+      # Flutter version 3.19.6
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -30,6 +30,10 @@ jobs:
 
       - name: Install Dependencies
         run: flutter pub get
+
+      # 🔴 Added: Automatic App Logo/Icon Generator Step
+      - name: Generate Launcher Icons
+        run: flutter pub run flutter_launcher_icons
 
       - name: Build Release APK
         run: flutter build apk --release --no-tree-shake-icons
