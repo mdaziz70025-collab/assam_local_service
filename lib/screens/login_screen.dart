@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -16,46 +17,39 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // 🔴 Web Client ID + Explicit Scopes for Reliable Authentication
+  // 🔴 Web Client ID from google-services.json
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     serverClientId:
         '340401925302-44nli0ga73gq4mmlkq060mthsbbpu1lp.apps.googleusercontent.com',
-    scopes: <String>[
-      'email',
-      'https://www.googleapis.com/auth/userinfo.profile',
-    ],
+    scopes: <String>['email', 'profile'],
   );
 
-  Future<void> _handleOriginalGoogleSignIn() async {
+  Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      // 1. Purani local cache/session disconnect karo taaki stale token loop na ho
+      // 1. Purani local cache/session clear karein
       await _googleSignIn.signOut();
       await _auth.signOut();
 
-      // 2. Direct Native Account Picker Pop-up open karo
+      // 2. Open Google Native Account Picker
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
-        // User ne sign-in window dismiss kar diya
+        // User ne cancel kiya
         setState(() => _isLoading = false);
         return;
       }
 
-      // 3. Google Auth Tokens Fetch Karo
+      // 3. Obtain authentication details
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
-
-      if (googleAuth.idToken == null) {
-        throw Exception("Google ID Token not received. Please try again.");
-      }
 
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // 4. Firebase Authentication
+      // 4. Firebase Authentication Sign In
       UserCredential userCredential =
           await _auth.signInWithCredential(credential);
       User? user = userCredential.user;
@@ -63,13 +57,17 @@ class _LoginScreenState extends State<LoginScreen> {
       if (user != null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              "Welcome ${user.displayName ?? 'User'}! Logged in as $_selectedRole.",
-            ),
+            content: Text("Welcome ${user.displayName ?? 'User'}!"),
             backgroundColor: Colors.green,
           ),
         );
-        _navigateToNextScreen();
+
+        // Direct Home Screen Navigation
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
       }
     } catch (e) {
       await _googleSignIn.signOut();
@@ -78,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Google Login Error: ${e.toString()}"),
+            content: Text("Login Error: ${e.toString()}"),
             backgroundColor: Colors.redAccent,
             duration: const Duration(seconds: 6),
           ),
@@ -88,14 +86,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
-    }
-  }
-
-  void _navigateToNextScreen() {
-    if (_selectedRole == "Customer") {
-      Navigator.pushReplacementNamed(context, '/');
-    } else {
-      Navigator.pushNamed(context, '/providerRegistration');
     }
   }
 
@@ -114,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 50),
                     Center(
                       child: Image.asset(
                         'assets/logo.png',
@@ -140,9 +130,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 25),
+                    const SizedBox(height: 30),
 
-                    // Role Selection
+                    // Role Selector
                     const Text(
                       "Choose Account Type:",
                       style: TextStyle(color: Colors.white70, fontSize: 14),
@@ -161,11 +151,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ? Colors.orangeAccent
                                     : Colors.blueGrey[800],
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: _selectedRole == "Customer"
-                                      ? Colors.orangeAccent
-                                      : Colors.white24,
-                                ),
                               ),
                               child: Center(
                                 child: Text(
@@ -193,11 +178,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ? Colors.orangeAccent
                                     : Colors.blueGrey[800],
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: _selectedRole == "Provider"
-                                      ? Colors.orangeAccent
-                                      : Colors.white24,
-                                ),
                               ),
                               child: Center(
                                 child: Text(
@@ -218,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 25),
 
-                    // Google Sign In Button
+                    // Google Login Button
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -233,8 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
                           height: 22,
                           errorBuilder: (context, error, stack) =>
-                              const Icon(Icons.g_mobiledata,
-                                  color: Colors.red, size: 30),
+                              const Icon(Icons.g_mobiledata, color: Colors.red),
                         ),
                         label: Text(
                           "Continue with Gmail / Google",
@@ -244,7 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.blueGrey[900],
                           ),
                         ),
-                        onPressed: _handleOriginalGoogleSignIn,
+                        onPressed: _handleGoogleSignIn,
                       ),
                     ),
 
@@ -294,12 +273,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         onPressed: () {
                           if (_phoneController.text.isNotEmpty) {
-                            _navigateToNextScreen();
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Kripya mobile number darj karein"),
-                              ),
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const HomeScreen()),
+                              (route) => false,
                             );
                           }
                         },
