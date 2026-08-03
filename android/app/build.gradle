@@ -27,9 +27,7 @@ apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
     compileSdkVersion 34
-    buildToolsVersion "34.0.0"
 
-    // 🔴 Java 8 Desugaring Compatibility (Matches Flutter Toolchain)
     compileOptions {
         coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
