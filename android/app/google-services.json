@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "340401925302",
+    "project_id": "assam-local-service",
+    "storage_bucket": "assam-local-service.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:340401925302:android:3857807d7ae6c2562dca17",
+        "android_client_info": {
+          "package_name": "com.example.basp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDL7IHKt3NDwLWiWrbxE-QQn5rMhipVJG8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
