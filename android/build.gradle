@@ -20,18 +20,25 @@ allprojects {
 }
 
 rootProject.buildDir = '../build'
+
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
 
-// 🔴 Force modern Build-Tools 34.0.0 on all subprojects / plugins
+// 🔴 Force Build-Tools 34.0.0 cleanly on subprojects without afterEvaluate crash
 subprojects {
     project.evaluationDependsOn(':app')
-    afterEvaluate { project ->
-        if (project.hasProperty('android')) {
-            project.android {
-                buildToolsVersion "34.0.0"
-            }
+}
+
+subprojects {
+    plugins.withId('com.android.application') {
+        android {
+            buildToolsVersion "34.0.0"
+        }
+    }
+    plugins.withId('com.android.library') {
+        android {
+            buildToolsVersion "34.0.0"
         }
     }
 }
