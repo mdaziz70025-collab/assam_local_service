@@ -41,12 +41,12 @@ jobs:
           mkdir -p ~/.android
           keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" || true
 
-      # 🔴 Build Debug APK (Guarantees matching with the SHA-1 in Firebase)
+      # 🔴 Build Release APK (Builds with multiDex & matches debug signingConfig in build.gradle)
       - name: Build APK
-        run: flutter build apk --debug --no-tree-shake-icons
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Assam-Local-Service-APK
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
