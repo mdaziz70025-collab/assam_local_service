@@ -27,7 +27,6 @@ apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
     compileSdkVersion 34
-    buildToolsVersion "34.0.0"
 
     compileOptions {
         coreLibraryDesugaringEnabled true
@@ -66,6 +65,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.multidex:multidex:2.0.1'
 
+    // 🔴 Crucial: Fixes D8 desugaring transform crash for Firebase
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 }
 
