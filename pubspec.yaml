@@ -12,11 +12,11 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Firebase Dependencies (Stable versions to fix D8 Dexing Engine Crash)
-  firebase_core: 2.27.0
-  firebase_auth: 4.15.0  # 🔴 Fixed D8 Dexing Error version
+  # Firebase Dependencies (Compatible versions)
+  firebase_core: ^2.27.0
+  firebase_auth: ^4.17.8
   google_sign_in: ^6.2.1
-  cloud_firestore: 4.15.5
+  cloud_firestore: ^4.15.8
 
   # UI & Map Dependencies
   cupertino_icons: ^1.0.5
