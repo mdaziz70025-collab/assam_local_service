@@ -51,8 +51,12 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.debug
+            
+            // Disable Minification/Shrinking to fix D8 Dexing Engine Crash
             minifyEnabled false
             shrinkResources false
+            
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
@@ -65,7 +69,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.multidex:multidex:2.0.1'
 
-    // 🔴 Crucial: Fixes D8 desugaring transform crash for Firebase
+    // Crucial for Firebase Auth & Recaptcha bytecode desugaring
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 }
 
