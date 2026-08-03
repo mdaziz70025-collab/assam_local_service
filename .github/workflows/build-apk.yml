@@ -15,11 +15,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # 🔴 Set Java JDK to 17 (Required for modern Firebase & Desugaring libraries)
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '11'
+          java-version: '17'
 
       # Flutter version 3.19.6
       - name: Setup Flutter
@@ -41,7 +42,7 @@ jobs:
           mkdir -p ~/.android
           keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" || true
 
-      # 🔴 Build Release APK (Builds with multiDex & matches debug signingConfig in build.gradle)
+      # Build Release APK
       - name: Build APK
         run: flutter build apk --release --no-tree-shake-icons
 
