@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package02/google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -16,30 +16,39 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // 🔴 Web Client ID + Native Account Picker Setup
+  // 🔴 Web Client ID + Explicit Scopes for Reliable Authentication
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    serverClientId: '340401925302-44nli0ga73gq4mmlkq060mthsbbpu1lp.apps.googleusercontent.com',
+    serverClientId:
+        '340401925302-44nli0ga73gq4mmlkq060mthsbbpu1lp.apps.googleusercontent.com',
+    scopes: <String>[
+      'email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+    ],
   );
 
   Future<void> _handleOriginalGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      // 1. Silent check: Agar phone par account already linked hai toh direct login kar do
-      GoogleSignInAccount? googleUser = await _googleSignIn.signInSilently();
+      // 1. Purani local cache/session disconnect karo taaki stale token loop na ho
+      await _googleSignIn.signOut();
+      await _auth.signOut();
 
-      // 2. Agar silent login nahi hua toh direct Native Account Selector Pop-up kholo
-      if (googleUser == null) {
-        googleUser = await _googleSignIn.signIn();
-      }
+      // 2. Direct Native Account Picker Pop-up open karo
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
-        // User ne cancel kar diya
+        // User ne sign-in window dismiss kar diya
         setState(() => _isLoading = false);
         return;
       }
 
-      // 3. Tokens Fetch Karein
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      // 3. Google Auth Tokens Fetch Karo
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      if (googleAuth.idToken == null) {
+        throw Exception("Google ID Token not received. Please try again.");
+      }
 
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -47,7 +56,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       // 4. Firebase Authentication
-      UserCredential userCredential = await _auth.signInWithCredential(credential);
+      UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
       User? user = userCredential.user;
 
       if (user != null && mounted) {
@@ -62,10 +72,9 @@ class _LoginScreenState extends State<LoginScreen> {
         _navigateToNextScreen();
       }
     } catch (e) {
-      // Security Exception Aane par session clear karo
       await _googleSignIn.signOut();
       await _auth.signOut();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
