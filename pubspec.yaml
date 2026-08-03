@@ -36,6 +36,14 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^2.0.0
+  flutter_launcher_icons: ^0.13.1 # 👈 Added for Home Screen App Icon
+
+# 🔴 App Launcher Icon Settings
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/logo.png"
+  min_sdk_android: 21
 
 flutter:
   uses-material-design: true
