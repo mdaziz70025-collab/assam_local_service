@@ -15,10 +15,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String selectedLanguage = 'English';
 
   Future<void> _handleLogout() async {
-    await GoogleSignIn().signOut();
-    await FirebaseAuth.instance.signOut();
-    if (mounted) {
+    try {
+      await GoogleSignIn().signOut();
+      await FirebaseAuth.instance.signOut();
+      if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Logout failed: ${e.toString()}"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     }
   }
 
@@ -36,7 +45,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // User Header Card
             Center(
               child: Column(
                 children: [
@@ -56,22 +64,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: isDarkMode ? Colors.white : Colors.black,
+                      color: isDarkMode ? Colors.white : Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     user?.email ?? user?.phoneNumber ?? "No contact details",
-                    style: const TextStyle(color: Colors.white60, fontSize: 14),
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white60 : Colors.black54,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 25),
-            const Divider(color: Colors.white24),
+            Divider(color: isDarkMode ? Colors.white24 : Colors.black12),
             const SizedBox(height: 10),
-
-            // Settings Options
             _buildSettingTile(
               icon: Icons.location_on,
               title: "Saved Addresses",
@@ -88,7 +97,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               leading: const Icon(Icons.dark_mode, color: Colors.orangeAccent),
               title: Text(
                 "Dark Mode",
-                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               trailing: Switch(
                 value: isDarkMode,
@@ -102,9 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               subtitle: "Contact Assam Local Service desk",
               onTap: () {},
             ),
-            const SizedBox(height: 20),
-
-            // Logout Button
+            const SizedBox(height: 30),
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -118,7 +128,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: const Icon(Icons.logout, color: Colors.white),
                 label: const Text(
                   "LOG OUT",
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
                 ),
                 onPressed: _handleLogout,
               ),
@@ -139,10 +153,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       leading: Icon(icon, color: Colors.orangeAccent),
       title: Text(
         title,
-        style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+        style: TextStyle(
+          color: isDarkMode ? Colors.white : Colors.black87,
+          fontWeight: FontWeight.w500,
+        ),
       ),
-      subtitle: Text(subtitle, style: const TextStyle(color: Colors.white54)),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white38),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          color: isDarkMode ? Colors.white54 : Colors.black54,
+        ),
+      ),
+      trailing: Icon(
+        Icons.arrow_forward_ios,
+        size: 16,
+        color: isDarkMode ? Colors.white38 : Colors.black38,
+      ),
       onTap: onTap,
     );
   }
@@ -151,19 +177,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Select Language"),
+        backgroundColor: isDarkMode ? Colors.blueGrey[800] : Colors.white,
+        title: Text(
+          "Select Language",
+          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: const Text("English"),
+              title: Text(
+                "English",
+                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+              ),
+              trailing: selectedLanguage == 'English'
+                  ? const Icon(Icons.check, color: Colors.orangeAccent)
+                  : null,
               onTap: () {
                 setState(() => selectedLanguage = 'English');
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              title: const Text("অসমীয়া (Assamese)"),
+              title: Text(
+                "অসমীয়া (Assamese)",
+                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+              ),
+              trailing: selectedLanguage == 'অসমীয়া'
+                  ? const Icon(Icons.check, color: Colors.orangeAccent)
+                  : null,
               onTap: () {
                 setState(() => selectedLanguage = 'অসমীয়া');
                 Navigator.pop(context);
