@@ -16,9 +16,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // 🔴 Web Client ID explicitly pass kar rahe hain (Error 10 Fix)
+  // 🔴 Updated Web Client ID (Match with latest google-services.json)
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    serverClientId: '340401925302-diarjh7uf71dteloglctsg3p5t6mj7bu.apps.googleusercontent.com',
+    serverClientId: '340401925302-44nli0ga73gq4mmlkq060mthsbbpu1lp.apps.googleusercontent.com',
   );
 
   Future<void> _handleOriginalGoogleSignIn() async {
