@@ -42,8 +42,8 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 30),
-
-            // User Profile Photo / Initial Avatar
+            
+            // User Photo or Initial Avatar
             CircleAvatar(
               radius: 50,
               backgroundColor: Colors.orangeAccent,
@@ -63,10 +63,10 @@ class HomeScreen extends StatelessWidget {
                     )
                   : null,
             ),
-
+            
             const SizedBox(height: 20),
-
-            // User Name
+            
+            // Display Name
             Text(
               user?.displayName ?? "User Name",
               style: const TextStyle(
@@ -75,10 +75,10 @@ class HomeScreen extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
-
+            
             const SizedBox(height: 8),
-
-            // User Email
+            
+            // Email ID
             Text(
               user?.email ?? "No Email Associated",
               style: const TextStyle(
@@ -91,7 +91,7 @@ class HomeScreen extends StatelessWidget {
             const Divider(color: Colors.white24),
             const SizedBox(height: 10),
 
-            // Settings Section
+            // Profile & Settings List Options
             ListTile(
               leading: const Icon(Icons.person, color: Colors.orangeAccent),
               title: const Text("Edit Profile",
