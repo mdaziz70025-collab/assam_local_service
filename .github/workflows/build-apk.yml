@@ -32,6 +32,11 @@ jobs:
       - name: Generate App Launcher Icons
         run: dart run flutter_launcher_icons
 
+      # 🔑 YEH STEP APKA SHA-1 KEY LOGS MEIN PRINT KAREGA:
+      - name: Get Build SHA-1 Key
+        run: |
+          keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android || true
+
       - name: Build Android Release APK
         run: flutter build apk --release --no-tree-shake-icons
 
