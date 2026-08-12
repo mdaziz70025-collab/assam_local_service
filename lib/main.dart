@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/category_screen.dart';
+import 'screens/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,37 +20,18 @@ class MyApp extends StatelessWidget {
       title: 'Assam Local Service',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.orange,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.orangeAccent,
+          brightness: Brightness.dark,
+        ),
         useMaterial3: true,
       ),
-      home: const AuthWrapper(),
+      initialRoute: '/login',
       routes: {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
-      },
-    );
-  }
-}
-
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(color: Colors.orangeAccent),
-            ),
-          );
-        }
-        if (snapshot.hasData) {
-          return const HomeScreen();
-        }
-        return const LoginScreen();
+        '/category': (context) => const CategoryScreen(),
+        '/profile': (context) => const ProfileScreen(),
       },
     );
   }
