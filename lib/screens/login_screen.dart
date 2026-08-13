@@ -13,9 +13,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
-  // Aapki Google Web Client ID
+  // Correct Web Client ID from google-services.json (client_type: 3)
   final String _webClientId =
-      '340401925302-gi2ec3l18fafal3pfuls68h70jkaqg4i.apps.googleusercontent.com';
+      '340401925302-44nli0ga73gq4mmlkq060mthsbbpu1lp.apps.googleusercontent.com';
 
   // 1️⃣ Passwordless Google Sign-In
   Future<void> _signInWithGoogle() async {
@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
         serverClientId: _webClientId,
       );
 
-      await googleSignIn.signOut(); // Existing session clear
+      await googleSignIn.signOut(); // Clear previous session
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
       if (googleUser == null) {
@@ -136,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 48),
 
-              // Loader / Buttons
+              // Loader / Login Buttons
               if (_isLoading)
                 const CircularProgressIndicator(color: Colors.orangeAccent)
               else ...[
