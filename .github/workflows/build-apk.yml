@@ -32,7 +32,7 @@ jobs:
       - name: Generate App Launcher Icons
         run: dart run flutter_launcher_icons
 
-      # 🔑 YEH STEP APKA SHA-1 KEY LOGS MEIN PRINT KAREGA:
+      # SHA-1 Key Print Step (Google/Facebook Auth verification ke liye)
       - name: Get Build SHA-1 Key
         run: |
           keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android || true
