@@ -32,7 +32,7 @@ jobs:
       - name: Generate App Launcher Icons
         run: dart run flutter_launcher_icons
 
-      # 🔑 Fixed Debug Keystore Setup
+      # 🔑 100% Fixed Debug Keystore (Hash key hamesha ke liye lock)
       - name: Setup Fixed Debug Keystore
         run: |
           mkdir -p ~/.android
@@ -43,7 +43,7 @@ jobs:
               -dname "CN=Android Debug, O=Android, C=US"
           fi
 
-      # 🔑 Print SHA-1 Key for Verification
+      # 🔑 Print SHA-1 & Key Hashes for Verification
       - name: Get Build SHA-1 Key
         run: |
           keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
