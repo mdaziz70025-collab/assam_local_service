@@ -32,17 +32,18 @@ jobs:
       - name: Generate App Launcher Icons
         run: dart run flutter_launcher_icons
 
-      # 🔑 Fixed Deterministic Keystore Generation (Permanent Hash Fix)
-      - name: Ensure Permanent Fixed Debug Keystore
+      # 🔑 Fixed Debug Keystore Setup
+      - name: Setup Fixed Debug Keystore
         run: |
           mkdir -p ~/.android
-          keytool -genkeypair -v -keystore ~/.android/debug.keystore \
-            -storepass android -alias androiddebugkey -keypass android \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Android Debug, O=Android, C=US" \
-            -startdate "2026/01/01 00:00:00" || true
+          if [ ! -f ~/.android/debug.keystore ]; then
+            keytool -genkey -v -keystore ~/.android/debug.keystore \
+              -storepass android -alias androiddebugkey -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug, O=Android, C=US"
+          fi
 
-      # 🔑 Print SHA-1 & Key Hashes
+      # 🔑 Print SHA-1 Key for Verification
       - name: Get Build SHA-1 Key
         run: |
           keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
