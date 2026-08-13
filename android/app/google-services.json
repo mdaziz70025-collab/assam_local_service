@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "340401925302-a2f6mebb07r6ns3bipe11qautbebe4tt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.basp",
+            "certificate_hash": "b80d0d31dea3f2ee2f73218361e131e6109ec0de"
+          }
+        },
+        {
           "client_id": "340401925302-aam4nsr9ohungl6a791vqclekruq7umo.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
