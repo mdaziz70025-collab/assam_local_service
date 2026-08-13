@@ -32,20 +32,13 @@ jobs:
       - name: Generate App Launcher Icons
         run: dart run flutter_launcher_icons
 
-      # 🔑 Step 1: Keystore Check (Repo wale Keystore ko runner me restore karna)
-      - name: Setup Permanent Debug Keystore
+      # 🔑 Repo me upload ki gayi fixed keystore copy karna
+      - name: Restore Permanent Debug Keystore
         run: |
           mkdir -p ~/.android
-          if [ -f ./android/app/debug.keystore ]; then
-            cp ./android/app/debug.keystore ~/.android/debug.keystore
-          elif [ ! -f ~/.android/debug.keystore ]; then
-            keytool -genkey -v -keystore ~/.android/debug.keystore \
-              -storepass android -alias androiddebugkey -keypass android \
-              -keyalg RSA -keysize 2048 -validity 10000 \
-              -dname "CN=Android Debug, O=Android, C=US"
-          fi
+          cp android/app/debug.keystore ~/.android/debug.keystore
 
-      # 🔑 Step 2: Print Fixed SHA-1 & Key Hash
+      # 🔑 Print SHA-1 Key for Verification
       - name: Get Build SHA-1 Key
         run: |
           keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
