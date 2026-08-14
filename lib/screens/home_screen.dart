@@ -16,10 +16,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String _userLocation = "Guwahati, Assam (GS Road)";
   String _searchQuery = "";
 
-  // Dynamic Bookings List (State Managed)
   final List<Map<String, dynamic>> _myBookings = [];
 
-  // Dummy Database for Service Providers across Categories
   final Map<String, List<Map<String, dynamic>>> _providersDb = {
     "Electrician": [
       {
@@ -115,7 +113,6 @@ class _HomeScreenState extends State<HomeScreen> {
     ],
   };
 
-  // 1. Edit / Change Location Dialog
   void _showChangeLocationDialog() {
     final controller = TextEditingController(text: _userLocation);
     showDialog(
@@ -168,7 +165,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 2. Open Service Providers List Bottom Sheet
   void _openProvidersListSheet(String categoryName) {
     final providers = _providersDb[categoryName] ?? [
       {
@@ -335,23 +331,37 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ],
                               ),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.orangeAccent,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.map_outlined,
+                                        color: Colors.orangeAccent),
+                                    tooltip: "View on Map",
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      Navigator.pushNamed(context, '/mappage',
+                                          arguments: categoryName);
+                                    },
                                   ),
-                                ),
-                                onPressed: () {
-                                  Navigator.pop(ctx);
-                                  _confirmAndAddBooking(categoryName, prov);
-                                },
-                                child: const Text(
-                                  "BOOK NOW",
-                                  style: TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold),
-                                ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.orangeAccent,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      _confirmAndAddBooking(categoryName, prov);
+                                    },
+                                    child: const Text(
+                                      "BOOK NOW",
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -368,7 +378,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 3. Confirm and Add to Live Bookings Tab
   void _confirmAndAddBooking(String category, Map<String, dynamic> provider) {
     final newBooking = {
       "service": category,
@@ -381,7 +390,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     setState(() {
       _myBookings.insert(0, newBooking);
-      _currentIndex = 1; // Switch immediately to Bookings Tab
+      _currentIndex = 1;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -393,7 +402,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 4. Edit Profile Dialog
   void _showEditProfileSheet() {
     final nameController = TextEditingController(text: user?.displayName ?? "Md Aziz");
     showModalBottomSheet(
@@ -459,7 +467,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 5. Logout Handler
   Future<void> _handleSignOut(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -544,7 +551,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ================= 🏠 TAB 1: EXPLORE & CATEGORIES =================
   Widget _buildHomeTab() {
     final List<Map<String, dynamic>> allCategories = [
       {"name": "Electrician", "icon": Icons.electrical_services, "color": Colors.amber},
@@ -567,7 +573,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 📍 Interactive Location Header
           GestureDetector(
             onTap: _showChangeLocationDialog,
             child: Container(
@@ -600,7 +605,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // 🔍 Functional Search Bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
@@ -620,7 +624,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 18),
 
-          // 🎁 Banner Card
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),
@@ -665,7 +668,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 24),
 
-          // Category Grid
           const Text(
             "Select A Service",
             style: TextStyle(
@@ -726,7 +728,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ================= 📅 TAB 2: LIVE BOOKINGS TAB =================
   Widget _buildBookingsTab() {
     if (_myBookings.isEmpty) {
       return Center(
@@ -856,7 +857,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ================= 👤 TAB 3: PROFILE TAB =================
   Widget _buildProfileTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -923,6 +923,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icons.location_on_outlined,
                   title: "My Service Address",
                   onTap: _showChangeLocationDialog,
+                ),
+                const Divider(color: Colors.white10, height: 1, indent: 60),
+                _buildProfileTile(
+                  icon: Icons.handyman_outlined,
+                  title: "Register as Service Partner",
+                  onTap: () => Navigator.pushNamed(context, '/registerPartner'),
                 ),
                 const Divider(color: Colors.white10, height: 1, indent: 60),
                 _buildProfileTile(
