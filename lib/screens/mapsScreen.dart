@@ -35,16 +35,15 @@ class _MappageState extends State<Mappage> {
     }
 
     final String selectedCategory =
-        (ModalRoute.of(context)?.settings.arguments as String?) ?? "Services";
+        (ModalRoute.of(context)?.settings.arguments as String?) ?? "Electrician";
 
-    return SafeArea(
-      child: Scaffold(
-        body: loading
-            ? const Center(
-                child: CupertinoActivityIndicator(),
-              )
-            : MapBody(obj, selectedCategory: selectedCategory),
-      ),
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F172A),
+      body: loading
+          ? const Center(
+              child: CupertinoActivityIndicator(radius: 16),
+            )
+          : MapBody(obj, selectedCategory: selectedCategory),
     );
   }
 }
@@ -67,7 +66,7 @@ class _MapBodyState extends State<MapBody> {
   final MapType _mapType = MapType.normal;
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
   static const CameraPosition _kInitialPosition = CameraPosition(
-    target: LatLng(26.1445, 91.7362), // Default location set to Assam region
+    target: LatLng(26.1445, 91.7362),
     zoom: 14.0,
   );
 
@@ -91,10 +90,10 @@ class _MapBodyState extends State<MapBody> {
         LatLng markerPos = LatLng(
             double.tryParse(cd[0]) ?? 26.1445, double.tryParse(cd[1]) ?? 91.7362);
         final Marker marker = Marker(
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
             markerId: markerId,
             infoWindow: InfoWindow(
-              title: "${widget.selectedCategory} Worker ${i + 1}",
+              title: "${widget.selectedCategory} Expert ${i + 1}",
               snippet: "Rating: ${obj.mapDataList[i].rating}",
             ),
             position: markerPos);
@@ -105,70 +104,62 @@ class _MapBodyState extends State<MapBody> {
 
     return SlidingUpPanel(
       controller: _pc,
-      color: Colors.blueGrey[900]!,
+      color: const Color(0xFF1E293B),
       backdropEnabled: true,
-      backdropColor: Colors.transparent,
-      backdropOpacity: 0,
-      maxHeight: MediaQuery.of(context).devicePixelRatio * 150,
+      backdropColor: Colors.black,
+      backdropOpacity: 0.4,
+      maxHeight: 450,
       borderRadius: radius,
       collapsed: InkWell(
-        onTap: () {
-          _pc.open();
-        },
+        onTap: () => _pc.open(),
         child: Container(
-          decoration: BoxDecoration(
-              borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(40.0),
-                  topLeft: Radius.circular(40.0)),
-              color: Colors.blueGrey[900]),
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(24.0),
+              topLeft: Radius.circular(24.0),
+            ),
+            color: Color(0xFF1E293B),
+          ),
           child: Column(
             children: <Widget>[
+              const SizedBox(height: 10),
               Container(
-                decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(40.0),
-                        topLeft: Radius.circular(40.0)),
-                    color: Colors.purple),
-                height: 10,
-              ),
-              Container(
-                color: Colors.blueGrey[900],
-                child: Row(
-                  children: <Widget>[
-                    const Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Icon(
-                        Icons.keyboard_arrow_up,
-                        color: Colors.white70,
-                        size: 30,
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        const Text(
-                          "Explore Nearby",
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          widget.selectedCategory,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    )
-                  ],
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              Container(
-                width: 140,
-                color: Colors.white38,
-                height: 4,
+              Row(
+                children: <Widget>[
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Icon(
+                      Icons.keyboard_arrow_up,
+                      color: Colors.orangeAccent,
+                      size: 26,
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      const Text(
+                        "Nearby Experts List",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        "${obj.mapDataList.length} ${widget.selectedCategory} available in Assam",
+                        style: const TextStyle(color: Colors.white60, fontSize: 12),
+                      ),
+                    ],
+                  )
+                ],
               ),
             ],
           ),
@@ -177,125 +168,122 @@ class _MapBodyState extends State<MapBody> {
       panel: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Container(
-            decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(40.0),
-                    topLeft: Radius.circular(40.0)),
-                color: Colors.purple),
-            height: 20,
+          const SizedBox(height: 12),
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
           ),
           Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
                 Text(
-                  "Nearby ${widget.selectedCategory}",
+                  "Nearby ${widget.selectedCategory}s",
                   style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 10),
-                Container(
-                  width: 120,
-                  color: Colors.white38,
-                  height: 4,
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  width: 80,
-                  color: Colors.white38,
-                  height: 4,
+                Text(
+                  "Showing Live",
+                  style: TextStyle(color: Colors.greenAccent[400], fontSize: 12),
                 ),
               ],
             ),
           ),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: ListView.builder(
-                  itemCount: obj.mapDataList.length,
-                  itemBuilder: (BuildContext ctxt, int index) {
-                    return InkWell(
-                      onTap: () {
-                        // Card par click karne se booking/rate list screen par bhejta hai
-                        Navigator.pushNamed(
-                          context,
-                          '/appointmentScreen',
-                          arguments: widget.selectedCategory,
-                        );
-                      },
-                      child: Card(
-                        margin: const EdgeInsets.only(bottom: 20),
-                        shadowColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20.0)),
-                        color: Colors.black,
-                        elevation: 1,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: obj.mapDataList.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (BuildContext ctxt, int index) {
+                return InkWell(
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/appointmentScreen',
+                      arguments: widget.selectedCategory,
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F172A),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: Colors.orangeAccent.withOpacity(0.2),
+                          child: const Icon(Icons.person, color: Colors.orangeAccent),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              const CircleAvatar(
-                                radius: 25,
-                                backgroundImage: NetworkImage(
-                                    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1868&q=80'),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    // Dynamic Name for Selected Category
-                                    Text(
-                                      "${widget.selectedCategory} Service ${index + 1}",
-                                      style: const TextStyle(
-                                          fontSize: 18.0,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white),
-                                    ),
-                                    const Text(
-                                      'Assam, India',
-                                      style: TextStyle(
-                                          fontSize: 14.0,
-                                          fontWeight: FontWeight.normal,
-                                          color: Colors.white54),
-                                    ),
-                                  ],
+                              Text(
+                                "${widget.selectedCategory} Partner ${index + 1}",
+                                style: const TextStyle(
+                                  fontSize: 15.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
                               ),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Text(
-                                    obj.mapDataList[index].rating.toString(),
-                                    style: const TextStyle(
-                                        fontSize: 20.0,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white),
-                                  ),
-                                  const Text(
-                                    'mtrs.',
-                                    style: TextStyle(
-                                        fontSize: 14.0,
-                                        fontWeight: FontWeight.normal,
-                                        fontStyle: FontStyle.italic,
-                                        color: Colors.white54),
-                                  ),
-                                ],
+                              const SizedBox(height: 2),
+                              const Text(
+                                'Guwahati, Assam',
+                                style: TextStyle(
+                                  fontSize: 12.0,
+                                  color: Colors.white54,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: <Widget>[
+                            Row(
+                              children: [
+                                const Icon(Icons.star, color: Colors.amber, size: 14),
+                                const SizedBox(width: 4),
+                                Text(
+                                  obj.mapDataList[index].rating.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 14.0,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              "View Rates",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.orangeAccent,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -311,85 +299,44 @@ class _MapBodyState extends State<MapBody> {
             initialCameraPosition: _kInitialPosition,
             onMapCreated: _onMapCreated,
           ),
-          Positioned(
-            left: 300,
-            top: 400,
-            right: 15,
-            bottom: 30,
-            child: Column(
-              children: <Widget>[
-                FloatingActionButton(
-                  backgroundColor: Colors.white,
-                  elevation: 15,
-                  child: const Icon(
-                    Icons.tune,
-                    color: Colors.black,
-                  ),
-                  onPressed: () {},
-                ),
-                const SizedBox(height: 10),
-                FloatingActionButton(
-                  backgroundColor: Colors.white,
-                  elevation: 15,
-                  child: const Icon(
-                    Icons.my_location,
-                    color: Colors.black,
-                  ),
-                  onPressed: () {},
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 15, 10, 0),
-            child: Card(
-              elevation: 15.0,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0)),
-              color: Colors.white,
-              child: SizedBox(
-                height: 70,
-                width: double.infinity,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: <Widget>[
-                    IconButton(
-                      icon: const Icon(
-                        Icons.menu,
-                        size: 30,
-                        color: Colors.black,
-                      ),
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/');
-                      },
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: const Color(0xFF1E293B),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                    Container(
-                      decoration: const BoxDecoration(
-                          borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                          color: Color(0xFFEEEEEE)),
-                      margin: const EdgeInsets.fromLTRB(0, 15, 0, 15),
-                      padding: const EdgeInsets.all(10),
-                      height: 50,
-                      width: MediaQuery.of(context).devicePixelRatio * 100,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black26, blurRadius: 8),
+                        ],
+                      ),
                       child: Text(
-                        "Search ${widget.selectedCategory} ...",
-                        style: const TextStyle(color: Colors.grey, fontSize: 16),
+                        "Showing ${widget.selectedCategory}s in Assam",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.clear,
-                        color: Colors.black,
-                        size: 30,
-                      ),
-                      onPressed: () {},
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );
