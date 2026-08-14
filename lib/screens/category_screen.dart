@@ -13,7 +13,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   final List<Map<String, dynamic>> allCategories = const [
     {"name": "Electrician", "icon": Icons.electrical_services, "color": Colors.orangeAccent},
-    {"name": "Plumber", "icon": Icons.plumbing, "color": Colors.blueAccent},
+    {"name": "Plumber", "icon": Icons.plumbing, "color": Colors.cyan},
     {"name": "Carpenter", "icon": Icons.carpenter, "color": Colors.brown},
     {"name": "Barber / Salon", "icon": Icons.content_cut, "color": Colors.pinkAccent},
     {"name": "Mason (Mistri)", "icon": Icons.construction, "color": Colors.grey},
@@ -24,7 +24,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   void _onItemTapped(int index) {
     if (index == 1) {
-      Navigator.pushNamed(context, '/bookingScreen');
+      Navigator.pushNamed(context, '/home');
     } else if (index == 2) {
       Navigator.pushNamed(context, '/profile');
     } else {
@@ -34,7 +34,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Search query ke hisab se categories filter hongi
     final filteredCategories = allCategories
         .where((cat) => (cat["name"] as String)
             .toLowerCase()
@@ -42,49 +41,40 @@ class _CategoryScreenState extends State<CategoryScreen> {
         .toList();
 
     return Scaffold(
-      backgroundColor: Colors.blueGrey[900]!,
+      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
         title: const Text(
           "Local Services Assam",
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        centerTitle: false,
-        backgroundColor: Colors.blueGrey[900]!,
+        backgroundColor: const Color(0xFF1E293B),
         elevation: 0,
         actions: [
-          // 🔴 Profile Icon Button
           IconButton(
-            icon: const Icon(Icons.account_circle, size: 30, color: Colors.orangeAccent),
+            icon: const Icon(Icons.account_circle, size: 28, color: Colors.orangeAccent),
             tooltip: "Profile",
-            onPressed: () {
-              Navigator.pushNamed(context, '/profile');
-            },
+            onPressed: () => Navigator.pushNamed(context, '/profile'),
           ),
           const SizedBox(width: 8),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🔴 Live Search Bar
             TextField(
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
+              onChanged: (value) => setState(() => _searchQuery = value),
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: "Search service (e.g. Electrician, Plumber)...",
-                hintStyle: const TextStyle(color: Colors.white38),
+                hintStyle: const TextStyle(color: Colors.white38, fontSize: 14),
                 prefixIcon: const Icon(Icons.search, color: Colors.orangeAccent),
                 filled: true,
-                fillColor: Colors.blueGrey[800],
+                fillColor: const Color(0xFF1E293B),
                 contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 15),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -92,18 +82,17 @@ class _CategoryScreenState extends State<CategoryScreen> {
             const SizedBox(height: 20),
 
             const Text(
-              "Aapko kis service ki zaroorat hai?",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              "What service do you need today?",
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 14),
 
-            // Categories Grid
             Expanded(
               child: filteredCategories.isEmpty
                   ? const Center(
                       child: Text(
-                        "Koi service nahi mili",
-                        style: TextStyle(color: Colors.white54, fontSize: 16),
+                        "No services found",
+                        style: TextStyle(color: Colors.white54, fontSize: 15),
                       ),
                     )
                   : GridView.builder(
@@ -125,17 +114,18 @@ class _CategoryScreenState extends State<CategoryScreen> {
                             );
                           },
                           child: Card(
-                            color: Colors.blueGrey[800]!,
+                            color: const Color(0xFF1E293B),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(color: Colors.white.withOpacity(0.06)),
                             ),
-                            elevation: 4,
+                            elevation: 0,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 CircleAvatar(
                                   radius: 28,
-                                  backgroundColor: (item["color"] as Color).withOpacity(0.2),
+                                  backgroundColor: (item["color"] as Color).withOpacity(0.18),
                                   child: Icon(
                                     item["icon"] as IconData,
                                     color: item["color"] as Color,
@@ -162,12 +152,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
           ],
         ),
       ),
-
-      // 🔴 Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        backgroundColor: Colors.blueGrey[800],
+        backgroundColor: const Color(0xFF1E293B),
         selectedItemColor: Colors.orangeAccent,
         unselectedItemColor: Colors.white54,
         type: BottomNavigationBarType.fixed,
