@@ -11,9 +11,10 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Firebase Core & Authentication
+  # Firebase Core, Auth & Cloud Firestore Database
   firebase_core: ^3.1.0
   firebase_auth: ^5.1.0
+  cloud_firestore: ^5.0.2
 
   # Passwordless Sign-In Providers
   google_sign_in: ^6.2.1
