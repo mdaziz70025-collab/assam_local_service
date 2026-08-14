@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -13,170 +15,128 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   final User? user = FirebaseAuth.instance.currentUser;
-  String _userLocation = "Guwahati, Assam (GS Road)";
+  String _userLocation = "Detecting Assam location...";
   String _searchQuery = "";
+  bool _isLocating = false;
 
   final List<Map<String, dynamic>> _myBookings = [];
 
-  final Map<String, List<Map<String, dynamic>>> _providersDb = {
-    "Electrician": [
-      {
-        "name": "Pranab Kalita",
-        "rating": 4.9,
-        "jobs": 142,
-        "price": "₹299",
-        "experience": "6 yrs exp",
-        "badge": "Top Rated"
-      },
-      {
-        "name": "Bipul Sharma",
-        "rating": 4.7,
-        "jobs": 89,
-        "price": "₹249",
-        "experience": "4 yrs exp",
-        "badge": "Fast Arrival"
-      },
-      {
-        "name": "Rahim Ali",
-        "rating": 4.8,
-        "jobs": 210,
-        "price": "₹349",
-        "experience": "8 yrs exp",
-        "badge": "Master Pro"
-      },
-    ],
-    "Plumber": [
-      {
-        "name": "Dipankar Das",
-        "rating": 4.8,
-        "jobs": 95,
-        "price": "₹299",
-        "experience": "5 yrs exp",
-        "badge": "Top Rated"
-      },
-      {
-        "name": "Mukul Saikia",
-        "rating": 4.6,
-        "jobs": 64,
-        "price": "₹199",
-        "experience": "3 yrs exp",
-        "badge": "Budget Choice"
-      },
-    ],
-    "AC Repair": [
-      {
-        "name": "Guwahati Cooling Care",
-        "rating": 4.9,
-        "jobs": 320,
-        "price": "₹499",
-        "experience": "10 yrs exp",
-        "badge": "Certified"
-      },
-      {
-        "name": "Jitumoni Bora",
-        "rating": 4.7,
-        "jobs": 110,
-        "price": "₹399",
-        "experience": "5 yrs exp",
-        "badge": "Same Day"
-      },
-    ],
-    "Cleaning": [
-      {
-        "name": "Assam Deep Cleaners",
-        "rating": 4.8,
-        "jobs": 180,
-        "price": "₹599",
-        "experience": "4 yrs exp",
-        "badge": "Eco Friendly"
-      },
-    ],
-    "Painter": [
-      {
-        "name": "Hiren Deka",
-        "rating": 4.7,
-        "jobs": 75,
-        "price": "₹799",
-        "experience": "7 yrs exp",
-        "badge": "Express Paint"
-      },
-    ],
-    "Carpenter": [
-      {
-        "name": "Ratan Sutradhar",
-        "rating": 4.9,
-        "jobs": 130,
-        "price": "₹349",
-        "experience": "9 yrs exp",
-        "badge": "Furniture Expert"
-      },
-    ],
-  };
+  final List<String> _popularLocalities = [
+    "Guwahati (Kamrup Metro)",
+    "Dispur, Assam",
+    "Beltola / Six Mile, Guwahati",
+    "Jalukbari / Maligaon, Guwahati",
+    "Silchar (Cachar)",
+    "Dibrugarh Town",
+    "Jorhat Central",
+    "Nagaon Market",
+    "Tezpur (Sonitpur)",
+    "Tinsukia Town",
+    "Bongaigaon City",
+    "Barpeta Town / Road",
+    "Dhubri Town",
+    "Goalpara Town",
+    "Karimganj Town",
+    "Hailakandi Town",
+    "Sivasagar Town",
+    "Golaghat Town",
+    "North Lakhimpur",
+    "Dhemaji Town",
+    "Kokrajhar (BTR)",
+    "Nalbari Town",
+    "Morigaon Town",
+    "Hojai Town",
+    "Diphu (Karbi Anglong)",
+    "Haflong (Dima Hasao)",
+    "Mangaldai (Darrang)",
+    "Udalguri (BTR)",
+    "Chirang / Kajalgaon",
+    "Baksa / Mushalpur",
+    "Biswanath Chariali",
+    "Charaideo / Sonari",
+    "South Salmara",
+    "Majuli River Island",
+  ];
 
-  void _showChangeLocationDialog() {
-    final controller = TextEditingController(text: _userLocation);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.my_location, color: Colors.orangeAccent, size: 20),
-            SizedBox(width: 8),
-            Text("Set Service Location",
-                style: TextStyle(color: Colors.white, fontSize: 18)),
-          ],
-        ),
-        content: TextField(
-          controller: controller,
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            hintText: "Enter your area/locality in Assam...",
-            hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-            filled: true,
-            fillColor: const Color(0xFF0F172A),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orangeAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () {
-              if (controller.text.trim().isNotEmpty) {
-                setState(() => _userLocation = controller.text.trim());
-              }
-              Navigator.pop(ctx);
-            },
-            child: const Text("Update", style: TextStyle(color: Colors.black)),
-          ),
-        ],
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _fetchLiveLocation();
   }
 
-  void _openProvidersListSheet(String categoryName) {
-    final providers = _providersDb[categoryName] ?? [
-      {
-        "name": "Assam Express Pro",
-        "rating": 4.8,
-        "jobs": 50,
-        "price": "₹299",
-        "experience": "3 yrs exp",
-        "badge": "Verified"
-      }
-    ];
+  // 📍 GPS Live Detector for all Assam Villages & Cities
+  Future<void> _fetchLiveLocation() async {
+    setState(() => _isLocating = true);
 
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _userLocation = "Guwahati, Assam (Turn on GPS)";
+          _isLocating = false;
+        });
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _userLocation = "Guwahati, Assam (Permission Denied)";
+            _isLocating = false;
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _userLocation = "Guwahati, Assam (Enable in Settings)";
+          _isLocating = false;
+        });
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+        String villageOrStreet = place.subLocality != null && place.subLocality!.isNotEmpty
+            ? place.subLocality!
+            : (place.street != null && place.street!.isNotEmpty ? place.street! : place.name ?? "");
+
+        String cityOrDistrict = place.locality != null && place.locality!.isNotEmpty
+            ? place.locality!
+            : (place.subAdministrativeArea ?? "Assam");
+
+        String postalCode = place.postalCode != null ? " - ${place.postalCode}" : "";
+
+        setState(() {
+          if (villageOrStreet.isNotEmpty && villageOrStreet != cityOrDistrict) {
+            _userLocation = "$villageOrStreet, $cityOrDistrict$postalCode";
+          } else {
+            _userLocation = "$cityOrDistrict, Assam$postalCode";
+          }
+          _isLocating = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _userLocation = "Guwahati, Assam";
+        _isLocating = false;
+      });
+    }
+  }
+
+  void _openLocationBottomSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -184,285 +144,264 @@ class _HomeScreenState extends State<HomeScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.75,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (_, scrollController) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Nearby $categoryName Experts",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white54),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
-              ),
-              Text(
-                "Verified partners near $_userLocation",
-                style: const TextStyle(color: Colors.white54, fontSize: 12),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView.separated(
-                  controller: scrollController,
-                  itemCount: providers.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, i) {
-                    final prov = providers[i];
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0F172A),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white10),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 24,
-                                backgroundColor: Colors.orangeAccent.withOpacity(0.2),
-                                child: Text(
-                                  prov["name"][0],
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.orangeAccent,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          prov["name"],
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 15,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: Colors.green.withOpacity(0.2),
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
-                                          child: Text(
-                                            prov["badge"],
-                                            style: const TextStyle(
-                                              color: Colors.greenAccent,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.star,
-                                            color: Colors.amber, size: 14),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          "${prov['rating']} (${prov['jobs']} orders) • ${prov['experience']}",
-                                          style: const TextStyle(
-                                              color: Colors.white60, fontSize: 12),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          const Divider(color: Colors.white10, height: 1),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text("Starting at",
-                                      style: TextStyle(
-                                          color: Colors.white38, fontSize: 11)),
-                                  Text(
-                                    prov["price"],
-                                    style: const TextStyle(
-                                      color: Colors.orangeAccent,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.map_outlined,
-                                        color: Colors.orangeAccent),
-                                    tooltip: "View on Map",
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      Navigator.pushNamed(context, '/mappage',
-                                          arguments: categoryName);
-                                    },
-                                  ),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.orangeAccent,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      _confirmAndAddBooking(categoryName, prov);
-                                    },
-                                    child: const Text(
-                                      "BOOK NOW",
-                                      style: TextStyle(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _confirmAndAddBooking(String category, Map<String, dynamic> provider) {
-    final newBooking = {
-      "service": category,
-      "provider": provider["name"],
-      "price": provider["price"],
-      "status": "Partner Assigned",
-      "time": "Today, in 35 mins",
-      "location": _userLocation,
-    };
-
-    setState(() {
-      _myBookings.insert(0, newBooking);
-      _currentIndex = 1;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("🎉 Booked ${provider['name']} for $category!"),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  void _showEditProfileSheet() {
-    final nameController = TextEditingController(text: user?.displayName ?? "Md Aziz");
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          left: 20,
-          right: 20,
-          top: 20,
-        ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Edit Profile",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: nameController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: "Full Name",
-                labelStyle: const TextStyle(color: Colors.orangeAccent),
-                filled: true,
-                fillColor: const Color(0xFF0F172A),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.orangeAccent.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.location_on_rounded,
+                color: Colors.orangeAccent,
+                size: 48,
               ),
             ),
             const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orangeAccent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () async {
-                  if (nameController.text.trim().isNotEmpty) {
-                    await user?.updateDisplayName(nameController.text.trim());
-                    setState(() {});
-                  }
-                  if (ctx.mounted) Navigator.pop(ctx);
-                },
-                child: const Text("SAVE CHANGES",
-                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            const Text(
+              "Where do you want your service?",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
+            const SizedBox(height: 8),
+            const Text(
+              "Works across all villages, towns & cities in Assam.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white60, fontSize: 13),
+            ),
+            const SizedBox(height: 28),
+
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orangeAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+                icon: const Icon(Icons.my_location, color: Colors.black),
+                label: const Text(
+                  "Detect My Current GPS Location",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _fetchLiveLocation();
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: const Icon(Icons.search, color: Colors.white),
+                label: const Text(
+                  "Search Village / District Manually",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _openManualAddressSearchSheet();
+                },
+              ),
+            ),
+            const SizedBox(height: 10),
           ],
         ),
+      ),
+    );
+  }
+
+  void _openManualAddressSearchSheet() {
+    String searchLocText = "";
+    final customLocController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF0F172A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final filteredList = _popularLocalities
+              .where((loc) =>
+                  loc.toLowerCase().contains(searchLocText.toLowerCase()))
+              .toList();
+
+          return DraggableScrollableSheet(
+            initialChildSize: 0.85,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            expand: false,
+            builder: (_, scrollController) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        "Search Village / Town",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: TextField(
+                      controller: customLocController,
+                      style: const TextStyle(color: Colors.white),
+                      onChanged: (val) {
+                        setModalState(() => searchLocText = val);
+                      },
+                      decoration: InputDecoration(
+                        icon: const Icon(Icons.search, color: Colors.orangeAccent),
+                        hintText: "Type any Gaon, Town or Landmark in Assam...",
+                        hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+                        border: InputBorder.none,
+                        suffixIcon: customLocController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.check_circle, color: Colors.greenAccent),
+                                onPressed: () {
+                                  setState(() => _userLocation = customLocController.text.trim());
+                                  Navigator.pop(ctx);
+                                },
+                              )
+                            : null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  ListTile(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _fetchLiveLocation();
+                    },
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    tileColor: const Color(0xFF1E293B),
+                    leading: const Icon(Icons.my_location, color: Colors.orangeAccent),
+                    title: const Text(
+                      "Detect exact current location",
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: const Text(
+                      "Uses high accuracy GPS",
+                      style: TextStyle(color: Colors.white38, fontSize: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    "POPULAR DISTRICTS & TOWNS IN ASSAM",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white38,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  Expanded(
+                    child: ListView.separated(
+                      controller: scrollController,
+                      itemCount: filteredList.length,
+                      separatorBuilder: (_, __) => const Divider(
+                        color: Colors.white10,
+                        height: 1,
+                      ),
+                      itemBuilder: (context, i) {
+                        final loc = filteredList[i];
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.location_on_outlined,
+                                color: Colors.white70, size: 18),
+                          ),
+                          title: Text(
+                            loc,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          onTap: () {
+                            setState(() => _userLocation = loc);
+                            Navigator.pop(ctx);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -573,38 +512,57 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Location Selector Bar
           GestureDetector(
-            onTap: _showChangeLocationDialog,
+            onTap: _openLocationBottomSheet,
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
               decoration: BoxDecoration(
                 color: const Color(0xFF1E293B),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.06)),
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.location_on, color: Colors.orangeAccent, size: 18),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      _userLocation,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                  _isLocating
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.orangeAccent,
+                          ),
+                        )
+                      : const Icon(Icons.location_on, color: Colors.orangeAccent, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Service Location (Assam)",
+                          style: TextStyle(color: Colors.white38, fontSize: 10),
+                        ),
+                        Text(
+                          _userLocation,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.keyboard_arrow_down, color: Colors.white54, size: 18),
+                  const Icon(Icons.keyboard_arrow_down, color: Colors.white54, size: 20),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 16),
 
+          // Search Bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
@@ -624,6 +582,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 18),
 
+          // Banner Card
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),
@@ -691,7 +650,13 @@ class _HomeScreenState extends State<HomeScreen> {
             itemBuilder: (context, i) {
               final cat = filteredCategories[i];
               return GestureDetector(
-                onTap: () => _openProvidersListSheet(cat["name"]),
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/appointmentScreen',
+                    arguments: cat["name"],
+                  );
+                },
                 child: Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFF1E293B),
@@ -729,131 +694,38 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBookingsTab() {
-    if (_myBookings.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.orangeAccent.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.receipt_long, size: 55, color: Colors.orangeAccent),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.orangeAccent.withOpacity(0.1),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 18),
-              const Text(
-                "No Bookings Yet",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: const Icon(Icons.receipt_long, size: 55, color: Colors.orangeAccent),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              "No Active Bookings",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 8),
-              const Text(
-                "Pick any service from explore tab to book a partner instantly.",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white60, fontSize: 13),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orangeAccent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: () => setState(() => _currentIndex = 0),
-                child: const Text(
-                  "Book Now",
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Bookings at $_userLocation will appear here with live tracking.",
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white60, fontSize: 13),
+            ),
+          ],
         ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _myBookings.length,
-      itemBuilder: (context, i) {
-        final b = _myBookings[i];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.orangeAccent.withOpacity(0.3)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    b["service"],
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      b["status"],
-                      style: const TextStyle(
-                        color: Colors.greenAccent,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  const Icon(Icons.person, size: 16, color: Colors.orangeAccent),
-                  const SizedBox(width: 6),
-                  Text("Partner: ${b['provider']}",
-                      style: const TextStyle(color: Colors.white70, fontSize: 13)),
-                  const Spacer(),
-                  Text(b["price"],
-                      style: const TextStyle(
-                          color: Colors.orangeAccent,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16)),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  const Icon(Icons.location_on, size: 16, color: Colors.white38),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      b["location"],
-                      style: const TextStyle(color: Colors.white38, fontSize: 12),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
+      ),
     );
   }
 
@@ -913,57 +785,24 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: Column(
               children: [
-                _buildProfileTile(
-                  icon: Icons.edit_outlined,
-                  title: "Edit Profile",
-                  onTap: _showEditProfileSheet,
+                ListTile(
+                  leading: const Icon(Icons.location_on_outlined, color: Colors.orangeAccent),
+                  title: const Text("Current Saved Location",
+                      style: TextStyle(color: Colors.white, fontSize: 15)),
+                  subtitle: Text(_userLocation,
+                      style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                  trailing: const Icon(Icons.arrow_forward_ios_rounded,
+                      size: 14, color: Colors.white38),
+                  onTap: _openLocationBottomSheet,
                 ),
                 const Divider(color: Colors.white10, height: 1, indent: 60),
-                _buildProfileTile(
-                  icon: Icons.location_on_outlined,
-                  title: "My Service Address",
-                  onTap: _showChangeLocationDialog,
-                ),
-                const Divider(color: Colors.white10, height: 1, indent: 60),
-                _buildProfileTile(
-                  icon: Icons.handyman_outlined,
-                  title: "Register as Service Partner",
+                ListTile(
+                  leading: const Icon(Icons.handyman_outlined, color: Colors.orangeAccent),
+                  title: const Text("Register as Service Partner",
+                      style: TextStyle(color: Colors.white, fontSize: 15)),
+                  trailing: const Icon(Icons.arrow_forward_ios_rounded,
+                      size: 14, color: Colors.white38),
                   onTap: () => Navigator.pushNamed(context, '/registerPartner'),
-                ),
-                const Divider(color: Colors.white10, height: 1, indent: 60),
-                _buildProfileTile(
-                  icon: Icons.support_agent,
-                  title: "Help & Support Desk",
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: const Color(0xFF1E293B),
-                      builder: (ctx) => const Padding(
-                        padding: EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.support_agent, size: 40, color: Colors.orangeAccent),
-                            SizedBox(height: 12),
-                            Text(
-                              "Assam Local Support Desk",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              "Email: support@assamlocalservice.com\nHelpline: +91 70025 XXXXX",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.white70, height: 1.4),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
                 ),
               ],
             ),
@@ -992,33 +831,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildProfileTile({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.orangeAccent.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: Colors.orangeAccent, size: 20),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.white38),
-      onTap: onTap,
     );
   }
 }
