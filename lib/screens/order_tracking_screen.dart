@@ -14,7 +14,6 @@ class OrderTrackingScreen extends StatefulWidget {
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   int _selectedRating = 5;
 
-  // Direct Phone Call
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(
       scheme: 'tel',
@@ -25,7 +24,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     }
   }
 
-  // Direct WhatsApp Chat
   Future<void> _openWhatsApp(String phoneNumber, String serviceName) async {
     String cleanNumber = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
     if (!cleanNumber.startsWith('91') && cleanNumber.length == 10) {
@@ -41,7 +39,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     }
   }
 
-  // Post Service Rating Dialog
   void _showRatingDialog(String orderId) {
     showDialog(
       context: context,
@@ -146,7 +143,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           final String partnerPhone = orderData['partnerPhone'] ?? '7002521291';
           final bool isRated = orderData['isRated'] ?? false;
 
-          // Status Progress Level (0 to 4)
           int progressLevel = 1;
           if (status.contains("Accepted") || status.contains("Way")) {
             progressLevel = 2;
@@ -161,7 +157,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Order Summary Card
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -203,7 +198,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // 2. Assigned Partner Card with Direct Call & WhatsApp
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -240,9 +234,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 2),
-                                Text(
+                                const Text(
                                   "Assam Local Verified • ⭐ 5.0",
-                                  style: const TextStyle(color: Colors.white60, fontSize: 12),
+                                  style: TextStyle(color: Colors.white60, fontSize: 12),
                                 ),
                               ],
                             ),
@@ -253,7 +247,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       const Divider(color: Colors.white10, height: 1),
                       const SizedBox(height: 12),
 
-                      // Call & WhatsApp Action Buttons
                       Row(
                         children: [
                           Expanded(
@@ -292,7 +285,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // 3. Step-by-Step Live Tracking Timeline
                 const Text(
                   "Order Status Timeline",
                   style: TextStyle(
@@ -336,7 +328,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
                 const SizedBox(height: 24),
 
-                // 4. Post-Service Rating Button (When Completed)
                 if (progressLevel == 4 && !isRated)
                   SizedBox(
                     width: double.infinity,
