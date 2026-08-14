@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProviderRegistrationScreen extends StatefulWidget {
   const ProviderRegistrationScreen({Key? key}) : super(key: key);
@@ -32,6 +33,27 @@ class _ProviderRegistrationScreenState
     'Painter',
     'AC Repair',
   ];
+
+  Future<void> _makeCall(String phoneNumber) async {
+    final clean = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    final Uri uri = Uri(scheme: 'tel', path: clean);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _openWhatsApp(String phoneNumber, String name) async {
+    String cleanNumber = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    if (!cleanNumber.startsWith('91') && cleanNumber.length == 10) {
+      cleanNumber = '91$cleanNumber';
+    }
+    final Uri uri = Uri.parse(
+      "https://wa.me/$cleanNumber?text=Hello%20$name,%20I%20accepted%20your%20service%20booking%20via%20Assam%20Local%20Service.",
+    );
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   Future<void> _submitPartnerToFirestore() async {
     if (!_formKey.currentState!.validate()) return;
@@ -103,7 +125,14 @@ class _ProviderRegistrationScreenState
     }
   }
 
-  Future<void> _updateOrderStatus(String bookingId, String newStatus, String partnerName) async {
+  Future<void> _updateOrderStatus(
+    String bookingId,
+    String newStatus,
+    String partnerName,
+    String partnerPhone, {
+    bool isCompleted = false,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
     try {
       await FirebaseFirestore.instance
           .collection('bookings')
@@ -111,24 +140,37 @@ class _ProviderRegistrationScreenState
           .update({
         'status': newStatus,
         'assignedPartnerName': partnerName,
+        'partnerPhone': partnerPhone,
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      if (isCompleted && user != null) {
+        await FirebaseFirestore.instance
+            .collection('providers')
+            .doc(user.uid)
+            .update({
+          'totalJobs': FieldValue.increment(1),
+        });
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Order status updated: $newStatus"),
-          backgroundColor: newStatus.contains("Accepted") ? Colors.green : Colors.orange,
+          content: Text(isCompleted
+              ? "🎉 Job Completed & Cash Collected!"
+              : "Order status: $newStatus"),
+          backgroundColor:
+              isCompleted ? Colors.green : Colors.orangeAccent,
           behavior: SnackBarBehavior.floating,
         ),
       );
+      setState(() {});
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Failed to update: $e"),
-          backgroundColor: Colors.redAccent,
-        ),
+            content: Text("Failed to update: $e"),
+            backgroundColor: Colors.redAccent),
       );
     }
   }
@@ -183,6 +225,7 @@ class _ProviderRegistrationScreenState
 
   Widget _buildPartnerDashboard(Map<String, dynamic> data) {
     final String name = data['name'] ?? 'Partner';
+    final String partnerPhone = data['phone'] ?? '7002521291';
     final String category = data['category'] ?? 'Electrician';
     final String location = data['location'] ?? 'Assam';
     final String experience = data['experience'] ?? 'Experienced';
@@ -346,7 +389,8 @@ class _ProviderRegistrationScreenState
                       SizedBox(height: 8),
                       Text(
                         "Listening for nearby requests...",
-                        style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            color: Colors.white70, fontWeight: FontWeight.w600),
                       ),
                       SizedBox(height: 4),
                       Text(
@@ -370,13 +414,20 @@ class _ProviderRegistrationScreenState
                   final doc = docs[index];
                   final orderData = doc.data() as Map<String, dynamic>;
                   final String orderId = doc.id;
-                  final String customerName = orderData['customerName'] ?? 'Customer';
-                  final String phone = orderData['customerPhone'] ?? 'Not Provided';
+                  final String customerName =
+                      orderData['customerName'] ?? 'Customer';
+                  final String custPhone =
+                      orderData['customerPhone'] ?? '7002521291';
+                  final String address =
+                      orderData['customerAddress'] ?? 'Assam Local';
                   final int amount = orderData['totalAmount'] ?? 0;
-                  final String scheduledDate = orderData['scheduledDate'] ?? 'Today';
+                  final String scheduledDate =
+                      orderData['scheduledDate'] ?? 'Today';
                   final String slot = orderData['scheduledSlot'] ?? '';
-                  final String currentStatus = orderData['status'] ?? 'Partner Assigned';
+                  final String currentStatus =
+                      orderData['status'] ?? 'Partner Assigned';
                   final bool isAccepted = currentStatus.contains("Accepted");
+                  final bool isCompleted = currentStatus.contains("Completed");
 
                   return Container(
                     padding: const EdgeInsets.all(16),
@@ -384,9 +435,11 @@ class _ProviderRegistrationScreenState
                       color: const Color(0xFF1E293B),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isAccepted
-                            ? Colors.green.withOpacity(0.5)
-                            : Colors.orangeAccent.withOpacity(0.3),
+                        color: isCompleted
+                            ? Colors.white12
+                            : (isAccepted
+                                ? Colors.green.withOpacity(0.5)
+                                : Colors.orangeAccent.withOpacity(0.3)),
                       ),
                     ),
                     child: Column(
@@ -416,22 +469,29 @@ class _ProviderRegistrationScreenState
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            const Icon(Icons.access_time, size: 14, color: Colors.white60),
+                            const Icon(Icons.access_time,
+                                size: 14, color: Colors.white60),
                             const SizedBox(width: 6),
                             Text(
                               "$scheduledDate ($slot)",
-                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 12),
                             ),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.phone, size: 14, color: Colors.white60),
+                            const Icon(Icons.home_outlined,
+                                size: 14, color: Colors.white60),
                             const SizedBox(width: 6),
-                            Text(
-                              phone,
-                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                            Expanded(
+                              child: Text(
+                                address,
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
@@ -439,23 +499,97 @@ class _ProviderRegistrationScreenState
                         const Divider(color: Colors.white10),
                         const SizedBox(height: 8),
 
-                        if (isAccepted)
+                        if (isCompleted)
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.15),
+                              color: Colors.white10,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Text(
-                              "✔ Order Accepted (On The Way)",
+                              "🎉 Service Completed (Cash Collected)",
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Colors.greenAccent,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12),
                             ),
+                          )
+                        else if (isAccepted)
+                          Column(
+                            children: [
+                              // 📞 Direct Call & WhatsApp to Customer
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xFF25D366),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10)),
+                                      ),
+                                      icon: const Icon(Icons.chat,
+                                          color: Colors.white, size: 16),
+                                      label: const Text("WhatsApp",
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold)),
+                                      onPressed: () => _openWhatsApp(
+                                          custPhone, customerName),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.orangeAccent,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10)),
+                                      ),
+                                      icon: const Icon(Icons.call,
+                                          color: Colors.black, size: 16),
+                                      label: const Text("Call Customer",
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold)),
+                                      onPressed: () => _makeCall(custPhone),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(
+                                        color: Colors.greenAccent),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                  ),
+                                  onPressed: () => _updateOrderStatus(
+                                    orderId,
+                                    "Service Completed",
+                                    name,
+                                    partnerPhone,
+                                    isCompleted: true,
+                                  ),
+                                  child: const Text(
+                                    "✔ MARK JOB COMPLETED & COLLECT CASH",
+                                    style: TextStyle(
+                                        color: Colors.greenAccent,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12),
+                                  ),
+                                ),
+                              ),
+                            ],
                           )
                         else
                           Row(
@@ -463,13 +597,17 @@ class _ProviderRegistrationScreenState
                               Expanded(
                                 child: OutlinedButton(
                                   style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Colors.redAccent),
+                                    side: const BorderSide(
+                                        color: Colors.redAccent),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
                                   onPressed: () => _updateOrderStatus(
-                                      orderId, "Rejected by Partner", name),
+                                      orderId,
+                                      "Rejected by Partner",
+                                      name,
+                                      partnerPhone),
                                   child: const Text(
                                     "REJECT",
                                     style: TextStyle(
@@ -489,7 +627,10 @@ class _ProviderRegistrationScreenState
                                     ),
                                   ),
                                   onPressed: () => _updateOrderStatus(
-                                      orderId, "Accepted - Partner on the Way", name),
+                                      orderId,
+                                      "Accepted - Partner on the Way",
+                                      name,
+                                      partnerPhone),
                                   child: const Text(
                                     "ACCEPT",
                                     style: TextStyle(
