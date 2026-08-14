@@ -100,7 +100,6 @@ class _ServiceBodyState extends State<ServiceBody> {
     }
   }
 
-  // 💾 Save Booking Order to Cloud Firestore
   Future<void> _placeOrderInFirestore(BuildContext sheetContext) async {
     final User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -113,7 +112,6 @@ class _ServiceBodyState extends State<ServiceBody> {
     setState(() => _isBooking = true);
 
     try {
-      // Selected Items summary
       List<Map<String, dynamic>> bookedItems = [];
       _itemQuantities.forEach((key, value) {
         if (value > 0) {
@@ -125,7 +123,6 @@ class _ServiceBodyState extends State<ServiceBody> {
         }
       });
 
-      // Firestore Write
       await FirebaseFirestore.instance.collection('bookings').add({
         'userId': user.uid,
         'customerName': user.displayName ?? "Customer",
@@ -143,17 +140,17 @@ class _ServiceBodyState extends State<ServiceBody> {
       });
 
       if (!mounted) return;
-      Navigator.pop(sheetContext); // Close sheet
+      Navigator.pop(sheetContext);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "🎉 Order Placed Successfully in Assam! Date: $_selectedDate ($_selectedSlot)",
+            "🎉 Order Placed Successfully! Date: $_selectedDate ($_selectedSlot)",
           ),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
         ),
       );
-      Navigator.pop(context); // Go back to Home
+      Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -175,156 +172,158 @@ class _ServiceBodyState extends State<ServiceBody> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setSheetState) {
-          final List<String> days = ["Today", "Tomorrow", "Day After"];
-          final List<String> slots = [
-            "09:00 AM - 11:00 AM",
-            "11:00 AM - 01:00 PM",
-            "02:00 PM - 04:00 PM",
-            "04:00 PM - 06:00 PM",
-            "06:00 PM - 08:00 PM"
-          ];
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final List<String> days = ["Today", "Tomorrow", "Day After"];
+            final List<String> slots = [
+              "09:00 AM - 11:00 AM",
+              "11:00 AM - 01:00 PM",
+              "02:00 PM - 04:00 PM",
+              "04:00 PM - 06:00 PM",
+              "06:00 PM - 08:00 PM"
+            ];
 
-          return Padding(
-            padding: const EdgeInsets.all(22.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
+            return Padding(
+              padding: const EdgeInsets.all(22.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Select Date & Time Slot",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  Row(
+                    children: days.map((day) {
+                      final isSelected = _selectedDate == day;
+                      return Expanded(
+                        child: GestureDetector(
+                          onTap: () => setSheetState(() => _selectedDate = day),
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isSelected ? Colors.orangeAccent : const Color(0xFF0F172A),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              day,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: isSelected ? Colors.black : Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+
+                  const Text(
+                    "Available Time Slots",
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 10),
+
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: slots.map((s) {
+                      final isSelected = _selectedSlot == s;
+                      return ChoiceChip(
+                        label: Text(s),
+                        selected: isSelected,
+                        selectedColor: Colors.orangeAccent,
+                        backgroundColor: const Color(0xFF0F172A),
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.black : Colors.white,
+                          fontSize: 12,
+                        ),
+                        onSelected: (val) {
+                          setSheetState(() => _selectedSlot = s);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    "Payment Mode",
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(10),
+                      color: const Color(0xFF0F172A),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "Select Date & Time Slot",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                Row(
-                  children: days.map((day) {
-                    final isSelected = _selectedDate == day;
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () => setSheetState(() => _selectedDate = day),
-                        child: Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: isSelected ? Colors.orangeAccent : const Color(0xFF0F172A),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.payments_outlined, color: Colors.greenAccent),
+                        const SizedBox(width: 10),
+                        Expanded(
                           child: Text(
-                            day,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: isSelected ? Colors.black : Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
+                            _selectedPayment,
+                            style: const TextStyle(color: Colors.white, fontSize: 13),
                           ),
                         ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 16),
-
-                const Text(
-                  "Available Time Slots",
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
-                ),
-                const SizedBox(height: 10),
-
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: slots.map((s) {
-                    final isSelected = _selectedSlot == s;
-                    return ChoiceChip(
-                      label: Text(s),
-                      selected: isSelected,
-                      selectedColor: Colors.orangeAccent,
-                      backgroundColor: const Color(0xFF0F172A),
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.black : Colors.white,
-                        fontSize: 12,
-                      ),
-                      onSelected: (val) {
-                        setSheetState(() => _selectedSlot = s);
-                      },
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 20),
-
-                const Text(
-                  "Payment Mode",
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.payments_outlined, color: Colors.greenAccent),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          _selectedPayment,
-                          style: const TextStyle(color: Colors.white, fontSize: 13),
-                        ),
-                      ),
-                      const Icon(Icons.check_circle, color: Colors.orangeAccent, size: 18),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orangeAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                        const Icon(Icons.check_circle, color: Colors.orangeAccent, size: 18),
+                      ],
                     ),
-                    onPressed: _isBooking ? null : () => _placeOrderInFirestore(ctx),
-                    child: _isBooking
-                        ? const CircularProgressIndicator(color: Colors.black)
-                        : Text(
-                            "CONFIRM BOOKING (₹$_totalAmount)",
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+                  const SizedBox(height: 24),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orangeAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: _isBooking ? null : () => _placeOrderInFirestore(ctx),
+                      child: _isBooking
+                          ? const CircularProgressIndicator(color: Colors.black)
+                          : Text(
+                              "CONFIRM BOOKING (₹$_totalAmount)",
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -338,7 +337,7 @@ class _ServiceBodyState extends State<ServiceBody> {
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             itemCount: selectedCategoryServices.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final serviceName = selectedCategoryServices.keys.elementAt(index);
               final price = selectedCategoryServices.values.elementAt(index);
@@ -448,12 +447,11 @@ class _ServiceBodyState extends State<ServiceBody> {
                         ),
                       ),
                   ],
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
-
-        // Bottom Checkout Bar
+        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
