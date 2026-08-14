@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'login_screen.dart';
 import 'order_tracking_screen.dart';
 
@@ -62,6 +63,27 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _fetchLiveLocation();
+  }
+
+  Future<void> _makeCall(String phoneNumber) async {
+    final clean = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    final Uri uri = Uri(scheme: 'tel', path: clean);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _openWhatsApp(String phoneNumber, String partnerName) async {
+    String cleanNumber = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    if (!cleanNumber.startsWith('91') && cleanNumber.length == 10) {
+      cleanNumber = '91$cleanNumber';
+    }
+    final Uri uri = Uri.parse(
+      "https://wa.me/$cleanNumber?text=Hello%20$partnerName,%20I%20have%20booked%20your%20service%20via%20Assam%20Local%20Service.",
+    );
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Future<void> _fetchLiveLocation() async {
@@ -511,7 +533,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Location Selector Bar
           GestureDetector(
             onTap: _openLocationBottomSheet,
             child: Container(
@@ -561,7 +582,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Search Bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
@@ -581,7 +601,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 18),
 
-          // Banner Card
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),
@@ -692,7 +711,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ================= 📅 TAB 2: LIVE FIRESTORE BOOKINGS STREAM =================
+  // ================= 📅 TAB 2: LIVE BOOKINGS WITH CALL & WHATSAPP =================
   Widget _buildBookingsTab() {
     final currentUserId = user?.uid;
     if (currentUserId == null) {
@@ -763,83 +782,137 @@ class _HomeScreenState extends State<HomeScreen> {
             final date = data['scheduledDate'] ?? "Today";
             final slot = data['scheduledSlot'] ?? "";
             final status = data['status'] ?? "Partner Assigned";
+            final partnerName = data['assignedPartnerName'] ?? "Aziz";
+            final partnerPhone = data['partnerPhone'] ?? "7002521291";
+            final bool isAccepted = status.contains("Accepted");
 
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => OrderTrackingScreen(orderId: docs[i].id),
-                  ),
-                );
-              },
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.orangeAccent.withOpacity(0.3)),
+            return Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isAccepted
+                      ? Colors.green.withOpacity(0.5)
+                      : Colors.orangeAccent.withOpacity(0.3),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          category,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        category,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isAccepted
+                              ? Colors.green.withOpacity(0.2)
+                              : Colors.orangeAccent.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          status,
+                          style: TextStyle(
+                            color: isAccepted ? Colors.greenAccent : Colors.orangeAccent,
+                            fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            status,
-                            style: const TextStyle(
-                              color: Colors.greenAccent,
-                              fontSize: 11,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time,
+                          size: 16, color: Colors.orangeAccent),
+                      const SizedBox(width: 6),
+                      Text("$date ($slot)",
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 13)),
+                      const Spacer(),
+                      Text("₹ $totalAmount",
+                          style: const TextStyle(
+                              color: Colors.orangeAccent,
                               fontWeight: FontWeight.bold,
+                              fontSize: 16)),
+                    ],
+                  ),
+
+                  // 📞 Direct Call & WhatsApp Buttons for Customer when Accepted
+                  if (isAccepted) ...[
+                    const SizedBox(height: 12),
+                    const Divider(color: Colors.white10),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF25D366),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
                             ),
+                            icon: const Icon(Icons.chat, color: Colors.white, size: 16),
+                            label: const Text("WhatsApp",
+                                style: TextStyle(
+                                    color: Colors.white, fontWeight: FontWeight.bold)),
+                            onPressed: () => _openWhatsApp(partnerPhone, partnerName),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orangeAccent,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                            icon: const Icon(Icons.call, color: Colors.black, size: 16),
+                            label: const Text("Call Partner",
+                                style: TextStyle(
+                                    color: Colors.black, fontWeight: FontWeight.bold)),
+                            onPressed: () => _makeCall(partnerPhone),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        const Icon(Icons.access_time,
-                            size: 16, color: Colors.orangeAccent),
-                        const SizedBox(width: 6),
-                        Text("$date ($slot)",
-                            style: const TextStyle(
-                                color: Colors.white70, fontSize: 13)),
-                        const Spacer(),
-                        Text("₹ $totalAmount",
-                            style: const TextStyle(
-                                color: Colors.orangeAccent,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16)),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text("Track Order Live →",
-                            style: TextStyle(color: Colors.orangeAccent, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
                   ],
-                ),
+
+                  const SizedBox(height: 10),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              OrderTrackingScreen(orderId: docs[i].id),
+                        ),
+                      );
+                    },
+                    child: const Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        "View Order Timeline →",
+                        style: TextStyle(
+                            color: Colors.white60,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             );
           },
