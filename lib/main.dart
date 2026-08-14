@@ -1,16 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+
+// Provider Import
+import 'Provider/map_data_provider.dart';
+
+// Screens Imports
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/category_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/mapsScreen.dart';
+import 'screens/serviceBody.dart';
+import 'screens/provider_registration_screen.dart';
 
 void main() async {
-  // Flutter binding aur Firebase initialize karna
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => MapDataProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -22,39 +37,65 @@ class MyApp extends StatelessWidget {
       title: 'Assam Local Service',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.orangeAccent,
           brightness: Brightness.dark,
         ),
         useMaterial3: true,
       ),
-      // Auto-Login Logic: Agar user pehle se logged-in hai toh direct Home Screen par jayega
+      // Auto-Login Check: Logged in users go directly to Home
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
-          // Loading State
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
-              backgroundColor: Color(0xFF263238), // blueGrey[900]
+              backgroundColor: Color(0xFF0F172A),
               body: Center(
                 child: CircularProgressIndicator(color: Colors.orangeAccent),
               ),
             );
           }
-          // User Logged In
           if (snapshot.hasData) {
             return const HomeScreen();
           }
-          // User Logged Out
           return const LoginScreen();
         },
       ),
-      // App Routes (Navigation)
+      // All App Routes Connected
       routes: {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
         '/category': (context) => const CategoryScreen(),
         '/profile': (context) => const ProfileScreen(),
+        '/mappage': (context) => const Mappage(),
+        '/registerPartner': (context) => const ProviderRegistrationScreen(),
+      },
+      // Dynamic Route for Passing Category & Rates to ServiceBody
+      onGenerateRoute: (settings) {
+        if (settings.name == '/appointmentScreen') {
+          final args = settings.arguments;
+          String category = "Electrician";
+
+          if (args is String) {
+            category = args;
+          } else if (args is Map<String, dynamic> && args['category'] != null) {
+            category = args['category'];
+          }
+
+          return MaterialPageRoute(
+            builder: (context) => Scaffold(
+              appBar: AppBar(
+                title: Text("$category Rate List"),
+                backgroundColor: const Color(0xFF1E293B),
+                foregroundColor: Colors.white,
+                elevation: 0,
+              ),
+              body: ServiceBody(serviceCategory: category),
+            ),
+          );
+        }
+        return null;
       },
     );
   }
