@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-// 🔔 Notification Service Import
 import 'services/notification_service.dart';
-
-// Screens Imports
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/category_screen.dart';
@@ -17,10 +14,7 @@ import 'screens/provider_registration_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-
-  // 🔔 Start Push Notifications & Local Alerts
   await NotificationService.initialize();
-
   runApp(const MyApp());
 }
 
