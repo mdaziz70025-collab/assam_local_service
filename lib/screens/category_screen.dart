@@ -109,7 +109,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           onTap: () {
                             Navigator.pushNamed(
                               context,
-                              '/mappage',
+                              '/appointmentScreen',
                               arguments: item["name"],
                             );
                           },
