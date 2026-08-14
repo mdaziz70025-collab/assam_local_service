@@ -13,11 +13,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
-  // Correct Web Client ID from google-services.json (client_type: 3)
   final String _webClientId =
       '340401925302-44nli0ga73gq4mmlkq060mthsbbpu1lp.apps.googleusercontent.com';
 
-  // 1️⃣ Passwordless Google Sign-In
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
     try {
@@ -25,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
         serverClientId: _webClientId,
       );
 
-      await googleSignIn.signOut(); // Clear previous session
+      await googleSignIn.signOut();
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
       if (googleUser == null) {
@@ -60,7 +58,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // 2️⃣ Passwordless Facebook Login
   Future<void> _signInWithFacebook() async {
     setState(() => _isLoading = true);
     try {
@@ -101,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Deep Slate Theme
+      backgroundColor: const Color(0xFF0F172A),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -112,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: 20),
 
-                // 🏪 Glowing Modern App Logo
+                // Glowing Logo
                 Container(
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
@@ -148,7 +145,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Title & Subtitle
                 const Text(
                   "Assam Local Service",
                   textAlign: TextAlign.center,
@@ -171,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // 🛡️ Features / Trust Badges Container
+                // Trust Badges
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   decoration: BoxDecoration(
@@ -190,14 +186,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 36),
 
-                // Loader / Login Buttons
                 if (_isLoading) ...[
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 30),
                     child: CircularProgressIndicator(color: Colors.orangeAccent),
                   ),
                 ] else ...[
-                  // 🔘 Google Button
+                  // Google Login Button
                   SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -238,7 +233,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  // 🔘 Facebook Button
+                  // Facebook Login Button
                   SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -271,7 +266,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
                 const SizedBox(height: 36),
 
-                // 📜 Footer
                 Text(
                   "By continuing, you agree to our Terms & Privacy Policy.\nMade with ❤️ in Assam",
                   textAlign: TextAlign.center,
@@ -291,7 +285,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// Sub-widget for Trust Badges
 class _TrustBadge extends StatelessWidget {
   final IconData icon;
   final String label;
