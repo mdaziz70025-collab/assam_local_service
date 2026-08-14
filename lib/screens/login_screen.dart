@@ -109,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: 20),
 
-                // Glowing Logo
+                // App Logo
                 Container(
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
