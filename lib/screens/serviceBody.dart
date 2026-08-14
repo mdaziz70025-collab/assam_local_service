@@ -14,7 +14,7 @@ class _ServiceBodyState extends State<ServiceBody> {
 
   String _selectedDate = "Today";
   String _selectedSlot = "10:00 AM - 12:00 PM";
-  String _selectedPayment = "Cash on Delivery (Pay After Service)";
+  final String _selectedPayment = "Cash on Delivery (Pay After Service)";
 
   final Map<String, Map<String, int>> masterServices = const {
     "Electrician": {
@@ -144,7 +144,7 @@ class _ServiceBodyState extends State<ServiceBody> {
                 ),
                 const SizedBox(height: 14),
 
-                // Days Row
+                // Days Selection Row
                 Row(
                   children: days.map((day) {
                     final isSelected = _selectedDate == day;
@@ -209,7 +209,7 @@ class _ServiceBodyState extends State<ServiceBody> {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: const Color(0xFF0F172A),
                     borderRadius: BorderRadius.circular(12),
@@ -230,7 +230,7 @@ class _ServiceBodyState extends State<ServiceBody> {
                 ),
                 const SizedBox(height: 24),
 
-                // Confirm Button
+                // Confirm Booking Button
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -392,10 +392,11 @@ class _ServiceBodyState extends State<ServiceBody> {
                         ),
                       ),
                   ],
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
+        ),
 
         // Bottom Checkout Bar
         Container(
