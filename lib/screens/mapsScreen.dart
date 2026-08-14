@@ -13,11 +13,10 @@ class _MappageState extends State<Mappage> {
   final Map<MarkerId, Marker> _markers = <MarkerId, Marker>{};
 
   static const CameraPosition _kInitialPosition = CameraPosition(
-    target: LatLng(26.1445, 91.7362), // Guwahati, Assam Center
+    target: LatLng(26.1445, 91.7362),
     zoom: 13.0,
   );
 
-  // Local verified Assam experts data
   final List<Map<String, dynamic>> _localExperts = [
     {
       "name": "Pranab Kalita",
@@ -76,7 +75,6 @@ class _MappageState extends State<Mappage> {
       backgroundColor: const Color(0xFF0F172A),
       body: Stack(
         children: [
-          // Google Map Background
           GoogleMap(
             mapToolbarEnabled: false,
             zoomGesturesEnabled: true,
@@ -86,8 +84,6 @@ class _MappageState extends State<Mappage> {
             initialCameraPosition: _kInitialPosition,
             onMapCreated: _onMapCreated,
           ),
-
-          // Top Header Bar
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -126,8 +122,6 @@ class _MappageState extends State<Mappage> {
               ),
             ),
           ),
-
-          // Modern Bottom Floating Card
           Positioned(
             left: 16,
             right: 16,
