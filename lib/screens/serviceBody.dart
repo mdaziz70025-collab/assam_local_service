@@ -12,6 +12,10 @@ class _ServiceBodyState extends State<ServiceBody> {
   int _totalAmount = 0;
   int _totalQuantity = 0;
 
+  String _selectedDate = "Today";
+  String _selectedSlot = "10:00 AM - 12:00 PM";
+  String _selectedPayment = "Cash on Delivery (Pay After Service)";
+
   final Map<String, Map<String, int>> masterServices = const {
     "Electrician": {
       'Switchboard Repair / Replace': 150,
@@ -52,7 +56,7 @@ class _ServiceBodyState extends State<ServiceBody> {
       'Sofa & Carpet Wash': 500,
     },
     "AC Repair": {
-      'AC Filter & Coil Cleaning': 399,
+      'AC Filter & Cleaning': 399,
       'Gas Leakage & Refill': 1200,
       'Installation / Uninstallation': 799,
       'Compressor Checkup': 450,
@@ -93,216 +97,376 @@ class _ServiceBodyState extends State<ServiceBody> {
     }
   }
 
+  // 📅 Checkout & Slot Selector Bottom Sheet (Urban Company Style)
+  void _openCheckoutBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          final List<String> days = ["Today", "Tomorrow", "Day After"];
+          final List<String> slots = [
+            "09:00 AM - 11:00 AM",
+            "11:00 AM - 01:00 PM",
+            "02:00 PM - 04:00 PM",
+            "04:00 PM - 06:00 PM",
+            "06:00 PM - 08:00 PM"
+          ];
+
+          return Padding(
+            padding: const EdgeInsets.all(22.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Select Date & Time Slot",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Days Row
+                Row(
+                  children: days.map((day) {
+                    final isSelected = _selectedDate == day;
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () => setSheetState(() => _selectedDate = day),
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.orangeAccent : const Color(0xFF0F172A),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            day,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: isSelected ? Colors.black : Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+
+                const Text(
+                  "Available Time Slots",
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                const SizedBox(height: 10),
+
+                // Time Slots Wrap
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: slots.map((s) {
+                    final isSelected = _selectedSlot == s;
+                    return ChoiceChip(
+                      label: Text(s),
+                      selected: isSelected,
+                      selectedColor: Colors.orangeAccent,
+                      backgroundColor: const Color(0xFF0F172A),
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.black : Colors.white,
+                        fontSize: 12,
+                      ),
+                      onSelected: (val) {
+                        setSheetState(() => _selectedSlot = s);
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+
+                const Text(
+                  "Payment Mode",
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F172A),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.payments_outlined, color: Colors.greenAccent),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _selectedPayment,
+                          style: const TextStyle(color: Colors.white, fontSize: 13),
+                        ),
+                      ),
+                      const Icon(Icons.check_circle, color: Colors.orangeAccent, size: 18),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Confirm Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orangeAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            "🎉 Booking Confirmed for $_selectedDate ($_selectedSlot)! Total: ₹$_totalAmount",
+                          ),
+                          backgroundColor: Colors.green,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      "CONFIRM BOOKING (₹$_totalAmount)",
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool hasSelection = _totalQuantity > 0;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              itemCount: selectedCategoryServices.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final serviceName = selectedCategoryServices.keys.elementAt(index);
-                final price = selectedCategoryServices.values.elementAt(index);
-                final qty = _itemQuantities[serviceName] ?? 0;
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            itemCount: selectedCategoryServices.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final serviceName = selectedCategoryServices.keys.elementAt(index);
+              final price = selectedCategoryServices.values.elementAt(index);
+              final qty = _itemQuantities[serviceName] ?? 0;
 
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: qty > 0
-                          ? Colors.orangeAccent.withOpacity(0.5)
-                          : Colors.white.withOpacity(0.06),
-                    ),
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: qty > 0
+                        ? Colors.orangeAccent.withOpacity(0.5)
+                        : Colors.white.withOpacity(0.06),
                   ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.orangeAccent.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.handyman_outlined,
-                          color: Colors.orangeAccent,
-                          size: 22,
-                        ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.orangeAccent.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      child: const Icon(
+                        Icons.handyman_outlined,
+                        color: Colors.orangeAccent,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            serviceName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "₹ $price",
+                            style: const TextStyle(
+                              color: Colors.orangeAccent,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (qty == 0)
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0F172A),
+                          foregroundColor: Colors.orangeAccent,
+                          side: const BorderSide(color: Colors.orangeAccent),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                        ),
+                        onPressed: () => _incrementItem(serviceName, price),
+                        child: const Text(
+                          "ADD",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    else
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.orangeAccent,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
                           children: [
+                            IconButton(
+                              icon: const Icon(Icons.remove,
+                                  size: 16, color: Colors.black),
+                              onPressed: () => _decrementItem(serviceName, price),
+                              constraints: const BoxConstraints(
+                                  minWidth: 32, minHeight: 32),
+                              padding: EdgeInsets.zero,
+                            ),
                             Text(
-                              serviceName,
+                              "$qty",
                               style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "₹ $price",
-                              style: const TextStyle(
-                                color: Colors.orangeAccent,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            IconButton(
+                              icon: const Icon(Icons.add,
+                                  size: 16, color: Colors.black),
+                              onPressed: () => _incrementItem(serviceName, price),
+                              constraints: const BoxConstraints(
+                                  minWidth: 32, minHeight: 32),
+                              padding: EdgeInsets.zero,
                             ),
                           ],
                         ),
                       ),
-                      if (qty == 0)
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0F172A),
-                            foregroundColor: Colors.orangeAccent,
-                            side: const BorderSide(color: Colors.orangeAccent),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                          ),
-                          onPressed: () => _incrementItem(serviceName, price),
-                          child: const Text(
-                            "ADD",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        )
-                      else
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.orangeAccent,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.remove,
-                                    size: 16, color: Colors.black),
-                                onPressed: () => _decrementItem(serviceName, price),
-                                constraints: const BoxConstraints(
-                                    minWidth: 32, minHeight: 32),
-                                padding: EdgeInsets.zero,
-                              ),
-                              Text(
-                                "$qty",
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.add,
-                                    size: 16, color: Colors.black),
-                                onPressed: () => _incrementItem(serviceName, price),
-                                constraints: const BoxConstraints(
-                                    minWidth: 32, minHeight: 32),
-                                padding: EdgeInsets.zero,
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
+                  ],
                 );
               },
             ),
           ),
 
-          // Checkout Bottom Bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              border: Border(
-                top: BorderSide(color: Colors.white.withOpacity(0.08)),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, -4),
-                ),
-              ],
+        // Bottom Checkout Bar
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E293B),
+            border: Border(
+              top: BorderSide(color: Colors.white.withOpacity(0.08)),
             ),
-            child: SafeArea(
-              child: Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "$_totalQuantity Item${_totalQuantity == 1 ? '' : 's'} Selected",
-                        style: TextStyle(
-                          color: hasSelection ? Colors.white70 : Colors.white38,
-                          fontSize: 13,
-                        ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Row(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "$_totalQuantity Item${_totalQuantity == 1 ? '' : 's'} Selected",
+                      style: TextStyle(
+                        color: hasSelection ? Colors.white70 : Colors.white38,
+                        fontSize: 13,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        "₹ $_totalAmount",
-                        style: TextStyle(
-                          color: hasSelection ? Colors.orangeAccent : Colors.white38,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "₹ $_totalAmount",
+                      style: TextStyle(
+                        color: hasSelection ? Colors.orangeAccent : Colors.white38,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
-                  ),
-                  const Spacer(),
-                  SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: hasSelection
-                            ? Colors.orangeAccent
-                            : Colors.white12,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: hasSelection
+                          ? Colors.orangeAccent
+                          : Colors.white12,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      onPressed: hasSelection
-                          ? () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      "🎉 Booking Confirmed for ${widget.serviceCategory}! Total: ₹$_totalAmount"),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                              Navigator.popUntil(context, (route) => route.isFirst);
-                            }
-                          : null,
-                      child: Text(
-                        "Confirm Order",
-                        style: TextStyle(
-                          color: hasSelection ? Colors.black : Colors.white38,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                    ),
+                    onPressed: hasSelection ? _openCheckoutBottomSheet : null,
+                    child: Text(
+                      "Select Slot",
+                      style: TextStyle(
+                        color: hasSelection ? Colors.black : Colors.white38,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
