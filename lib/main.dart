@@ -71,6 +71,7 @@ class MyApp extends StatelessWidget {
 
           return MaterialPageRoute(
             builder: (context) => Scaffold(
+              backgroundColor: const Color(0xFF0F172A),
               appBar: AppBar(
                 title: Text("$category Rate List"),
                 backgroundColor: const Color(0xFF1E293B),
