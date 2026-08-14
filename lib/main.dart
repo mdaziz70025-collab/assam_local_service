@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:provider/provider.dart';
-
-// Provider Import
-import 'Provider/map_data_provider.dart';
 
 // Screens Imports
 import 'screens/login_screen.dart';
@@ -18,14 +14,7 @@ import 'screens/provider_registration_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => MapDataProvider()),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -44,7 +33,6 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      // Auto-Login Check: Logged in users go directly to Home
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
@@ -62,7 +50,6 @@ class MyApp extends StatelessWidget {
           return const LoginScreen();
         },
       ),
-      // All App Routes Connected
       routes: {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
@@ -71,7 +58,6 @@ class MyApp extends StatelessWidget {
         '/mappage': (context) => const Mappage(),
         '/registerPartner': (context) => const ProviderRegistrationScreen(),
       },
-      // Dynamic Route for Passing Category & Rates to ServiceBody
       onGenerateRoute: (settings) {
         if (settings.name == '/appointmentScreen') {
           final args = settings.arguments;
