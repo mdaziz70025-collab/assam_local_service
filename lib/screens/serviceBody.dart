@@ -447,10 +447,11 @@ class _ServiceBodyState extends State<ServiceBody> {
                         ),
                       ),
                   ],
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
+        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
