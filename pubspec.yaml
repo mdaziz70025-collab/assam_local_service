@@ -16,11 +16,11 @@ dependencies:
   firebase_auth: ^5.1.0
   cloud_firestore: ^5.0.2
 
-  # Push Notifications & Local Alerts
+  # 🔔 Push Notifications & Local Alerts
   firebase_messaging: ^15.0.2
   flutter_local_notifications: ^17.2.2
 
-  # Direct Call & WhatsApp Launcher
+  # 📞 Direct Call & WhatsApp Launcher
   url_launcher: ^6.2.6
 
   # Passwordless Sign-In Providers
@@ -31,7 +31,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   google_maps_flutter: ^2.5.3
 
-  # Live Assam Village & GPS Locator
+  # 📍 Live Assam Village & GPS Locator
   geolocator: ^12.0.0
   geocoding: ^3.0.0
 
