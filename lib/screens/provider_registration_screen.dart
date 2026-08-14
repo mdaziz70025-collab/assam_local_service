@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProviderRegistrationScreen extends StatefulWidget {
   const ProviderRegistrationScreen({Key? key}) : super(key: key);
@@ -11,6 +13,7 @@ class ProviderRegistrationScreen extends StatefulWidget {
 class _ProviderRegistrationScreenState
     extends State<ProviderRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
+  bool _isSaving = false;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -29,6 +32,51 @@ class _ProviderRegistrationScreenState
     'Painter',
     'AC Repair',
   ];
+
+  Future<void> _submitPartnerToFirestore() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+    final user = FirebaseAuth.instance.currentUser;
+
+    try {
+      await FirebaseFirestore.instance.collection('providers').add({
+        'userId': user?.uid ?? '',
+        'name': _nameController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'category': _selectedCategory,
+        'experience': _experienceController.text.trim(),
+        'baseRate': int.tryParse(_rateController.text.trim()) ?? 299,
+        'location': _locationController.text.trim(),
+        'isVerified': true,
+        'rating': 5.0,
+        'completedOrders': 0,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            "🎉 Partner Profile Saved! You are now live in Assam.",
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.pushReplacementNamed(context, '/home');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Registration Failed: ${e.toString()}"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -204,32 +252,18 @@ class _ProviderRegistrationScreenState
                       ),
                       elevation: 2,
                     ),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text(
-                              "🎉 Partner Registration Submitted! We will verify your profile shortly.",
-                            ),
-                            backgroundColor: Colors.green,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                    onPressed: _isSaving ? null : _submitPartnerToFirestore,
+                    child: _isSaving
+                        ? const CircularProgressIndicator(color: Colors.black)
+                        : const Text(
+                            "REGISTER AS PARTNER",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                              letterSpacing: 0.5,
                             ),
                           ),
-                        );
-                        Navigator.pushReplacementNamed(context, '/home');
-                      }
-                    },
-                    child: const Text(
-                      "REGISTER AS PARTNER",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
