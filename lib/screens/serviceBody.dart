@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ServiceBody extends StatefulWidget {
   final String serviceCategory;
@@ -11,6 +13,7 @@ class ServiceBody extends StatefulWidget {
 class _ServiceBodyState extends State<ServiceBody> {
   int _totalAmount = 0;
   int _totalQuantity = 0;
+  bool _isBooking = false;
 
   String _selectedDate = "Today";
   String _selectedSlot = "10:00 AM - 12:00 PM";
@@ -97,7 +100,73 @@ class _ServiceBodyState extends State<ServiceBody> {
     }
   }
 
-  // 📅 Checkout & Slot Selector Bottom Sheet (Urban Company Style)
+  // 💾 Save Booking Order to Cloud Firestore
+  Future<void> _placeOrderInFirestore(BuildContext sheetContext) async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please login first to book.")),
+      );
+      return;
+    }
+
+    setState(() => _isBooking = true);
+
+    try {
+      // Selected Items summary
+      List<Map<String, dynamic>> bookedItems = [];
+      _itemQuantities.forEach((key, value) {
+        if (value > 0) {
+          bookedItems.add({
+            "serviceName": key,
+            "quantity": value,
+            "unitPrice": selectedCategoryServices[key],
+          });
+        }
+      });
+
+      // Firestore Write
+      await FirebaseFirestore.instance.collection('bookings').add({
+        'userId': user.uid,
+        'customerName': user.displayName ?? "Customer",
+        'customerPhone': user.phoneNumber ?? "",
+        'customerEmail': user.email ?? "",
+        'category': widget.serviceCategory,
+        'items': bookedItems,
+        'totalAmount': _totalAmount,
+        'totalQuantity': _totalQuantity,
+        'scheduledDate': _selectedDate,
+        'scheduledSlot': _selectedSlot,
+        'paymentMode': _selectedPayment,
+        'status': 'Partner Assigned',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
+      Navigator.pop(sheetContext); // Close sheet
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "🎉 Order Placed Successfully in Assam! Date: $_selectedDate ($_selectedSlot)",
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.pop(context); // Go back to Home
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Booking Failed: ${e.toString()}"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isBooking = false);
+    }
+  }
+
   void _openCheckoutBottomSheet() {
     showModalBottomSheet(
       context: context,
@@ -144,7 +213,6 @@ class _ServiceBodyState extends State<ServiceBody> {
                 ),
                 const SizedBox(height: 14),
 
-                // Days Selection Row
                 Row(
                   children: days.map((day) {
                     final isSelected = _selectedDate == day;
@@ -180,7 +248,6 @@ class _ServiceBodyState extends State<ServiceBody> {
                 ),
                 const SizedBox(height: 10),
 
-                // Time Slots Wrap
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -230,7 +297,6 @@ class _ServiceBodyState extends State<ServiceBody> {
                 ),
                 const SizedBox(height: 24),
 
-                // Confirm Booking Button
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -241,27 +307,17 @@ class _ServiceBodyState extends State<ServiceBody> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            "🎉 Booking Confirmed for $_selectedDate ($_selectedSlot)! Total: ₹$_totalAmount",
+                    onPressed: _isBooking ? null : () => _placeOrderInFirestore(ctx),
+                    child: _isBooking
+                        ? const CircularProgressIndicator(color: Colors.black)
+                        : Text(
+                            "CONFIRM BOOKING (₹$_totalAmount)",
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
                           ),
-                          backgroundColor: Colors.green,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                      Navigator.pop(context);
-                    },
-                    child: Text(
-                      "CONFIRM BOOKING (₹$_totalAmount)",
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
                   ),
                 ),
               ],
@@ -392,11 +448,10 @@ class _ServiceBodyState extends State<ServiceBody> {
                         ),
                       ),
                   ],
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
 
         // Bottom Checkout Bar
         Container(
