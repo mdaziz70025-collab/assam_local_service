@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -18,8 +19,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String _userLocation = "Detecting Assam location...";
   String _searchQuery = "";
   bool _isLocating = false;
-
-  final List<Map<String, dynamic>> _myBookings = [];
 
   final List<String> _popularLocalities = [
     "Guwahati (Kamrup Metro)",
@@ -64,7 +63,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchLiveLocation();
   }
 
-  // 📍 GPS Live Detector for all Assam Villages & Cities
   Future<void> _fetchLiveLocation() async {
     setState(() => _isLocating = true);
 
@@ -512,7 +510,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Location Selector Bar
           GestureDetector(
             onTap: _openLocationBottomSheet,
             child: Container(
@@ -693,39 +690,141 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ================= 📅 TAB 2: LIVE FIRESTORE BOOKINGS STREAM =================
   Widget _buildBookingsTab() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
+    final currentUserId = user?.uid;
+    if (currentUserId == null) {
+      return const Center(
+        child: Text("Please log in to view your bookings.",
+            style: TextStyle(color: Colors.white60)),
+      );
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('bookings')
+          .where('userId', isEqualTo: currentUserId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.orangeAccent),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.orangeAccent.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.receipt_long,
+                        size: 55, color: Colors.orangeAccent),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    "No Active Bookings",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    "When you book a service in Assam, your live orders will show here.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white60, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final docs = snapshot.data!.docs;
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: docs.length,
+          itemBuilder: (context, i) {
+            final data = docs[i].data() as Map<String, dynamic>;
+            final category = data['category'] ?? "Service";
+            final totalAmount = data['totalAmount'] ?? 0;
+            final date = data['scheduledDate'] ?? "Today";
+            final slot = data['scheduledSlot'] ?? "";
+            final status = data['status'] ?? "Partner Assigned";
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orangeAccent.withOpacity(0.1),
-                shape: BoxShape.circle,
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.orangeAccent.withOpacity(0.3)),
               ),
-              child: const Icon(Icons.receipt_long, size: 55, color: Colors.orangeAccent),
-            ),
-            const SizedBox(height: 18),
-            const Text(
-              "No Active Bookings",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        category,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          status,
+                          style: const TextStyle(
+                            color: Colors.greenAccent,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time,
+                          size: 16, color: Colors.orangeAccent),
+                      const SizedBox(width: 6),
+                      Text("$date ($slot)",
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 13)),
+                      const Spacer(),
+                      Text("₹ $totalAmount",
+                          style: const TextStyle(
+                              color: Colors.orangeAccent,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16)),
+                    ],
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Bookings at $_userLocation will appear here with live tracking.",
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white60, fontSize: 13),
-            ),
-          ],
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
