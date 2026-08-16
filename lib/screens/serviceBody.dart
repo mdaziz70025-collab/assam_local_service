@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -18,6 +19,9 @@ class _ServiceBodyState extends State<ServiceBody> {
   String _selectedDate = "Today";
   String _selectedSlot = "10:00 AM - 12:00 PM";
   final String _selectedPayment = "Cash on Delivery (Pay After Service)";
+
+  final TextEditingController _customerPhoneController = TextEditingController();
+  final TextEditingController _customerAddressController = TextEditingController();
 
   final Map<String, Map<String, int>> masterServices = const {
     "Electrician": {
@@ -109,6 +113,16 @@ class _ServiceBodyState extends State<ServiceBody> {
       return;
     }
 
+    if (_customerPhoneController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter mobile number for partner to call."),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isBooking = true);
 
     try {
@@ -123,11 +137,16 @@ class _ServiceBodyState extends State<ServiceBody> {
         }
       });
 
+      // 🔐 Generate 4-digit secret OTP
+      final String completionOtp = (1000 + Random().nextInt(9000)).toString();
+
       await FirebaseFirestore.instance.collection('bookings').add({
         'userId': user.uid,
         'customerName': user.displayName ?? "Customer",
-        'customerPhone': user.phoneNumber ?? "",
-        'customerEmail': user.email ?? "",
+        'customerPhone': _customerPhoneController.text.trim(),
+        'customerAddress': _customerAddressController.text.trim().isNotEmpty
+            ? _customerAddressController.text.trim()
+            : "Assam Local Address",
         'category': widget.serviceCategory,
         'items': bookedItems,
         'totalAmount': _totalAmount,
@@ -135,6 +154,7 @@ class _ServiceBodyState extends State<ServiceBody> {
         'scheduledDate': _selectedDate,
         'scheduledSlot': _selectedSlot,
         'paymentMode': _selectedPayment,
+        'completionOtp': completionOtp,
         'status': 'Partner Assigned',
         'createdAt': FieldValue.serverTimestamp(),
       });
@@ -144,7 +164,7 @@ class _ServiceBodyState extends State<ServiceBody> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "🎉 Order Placed Successfully! Date: $_selectedDate ($_selectedSlot)",
+            "🎉 Order Placed! Share OTP $completionOtp with partner after work.",
           ),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
@@ -185,140 +205,153 @@ class _ServiceBodyState extends State<ServiceBody> {
             ];
 
             return Padding(
-              padding: const EdgeInsets.all(22.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.white24,
-                        borderRadius: BorderRadius.circular(10),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                left: 20,
+                right: 20,
+                top: 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Select Date & Time Slot",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Booking Details",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
+                    const SizedBox(height: 14),
 
-                  Row(
-                    children: days.map((day) {
-                      final isSelected = _selectedDate == day;
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => setSheetState(() => _selectedDate = day),
-                          child: Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: isSelected ? Colors.orangeAccent : const Color(0xFF0F172A),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              day,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: isSelected ? Colors.black : Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                    TextField(
+                      controller: _customerPhoneController,
+                      keyboardType: TextInputType.phone,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: "Your Phone Number (For Partner Call)",
+                        hintText: "e.g. 70025XXXXX",
+                        hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+                        labelStyle: const TextStyle(color: Colors.orangeAccent, fontSize: 13),
+                        prefixIcon: const Icon(Icons.phone, color: Colors.orangeAccent, size: 20),
+                        filled: true,
+                        fillColor: const Color(0xFF0F172A),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    TextField(
+                      controller: _customerAddressController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: "House No / Gaon / Landmark",
+                        hintText: "e.g. Near Daily Bazar, Kodalduwa",
+                        hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+                        labelStyle: const TextStyle(color: Colors.white70, fontSize: 13),
+                        prefixIcon: const Icon(Icons.home, color: Colors.orangeAccent, size: 20),
+                        filled: true,
+                        fillColor: const Color(0xFF0F172A),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    const Text(
+                      "Select Date & Time Slot",
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white70),
+                    ),
+                    const SizedBox(height: 10),
+
+                    Row(
+                      children: days.map((day) {
+                        final isSelected = _selectedDate == day;
+                        return Expanded(
+                          child: GestureDetector(
+                            onTap: () => setSheetState(() => _selectedDate = day),
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: isSelected ? Colors.orangeAccent : const Color(0xFF0F172A),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                day,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: isSelected ? Colors.black : Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 16),
-
-                  const Text(
-                    "Available Time Slots",
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                  const SizedBox(height: 10),
-
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: slots.map((s) {
-                      final isSelected = _selectedSlot == s;
-                      return ChoiceChip(
-                        label: Text(s),
-                        selected: isSelected,
-                        selectedColor: Colors.orangeAccent,
-                        backgroundColor: const Color(0xFF0F172A),
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.black : Colors.white,
-                          fontSize: 12,
-                        ),
-                        onSelected: (val) {
-                          setSheetState(() => _selectedSlot = s);
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 20),
-
-                  const Text(
-                    "Payment Mode",
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A),
-                      borderRadius: BorderRadius.circular(12),
+                        );
+                      }).toList(),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.payments_outlined, color: Colors.greenAccent),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            _selectedPayment,
-                            style: const TextStyle(color: Colors.white, fontSize: 13),
+                    const SizedBox(height: 12),
+
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: slots.map((s) {
+                        final isSelected = _selectedSlot == s;
+                        return ChoiceChip(
+                          label: Text(s),
+                          selected: isSelected,
+                          selectedColor: Colors.orangeAccent,
+                          backgroundColor: const Color(0xFF0F172A),
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.black : Colors.white,
+                            fontSize: 12,
+                          ),
+                          onSelected: (val) {
+                            setSheetState(() => _selectedSlot = s);
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orangeAccent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        const Icon(Icons.check_circle, color: Colors.orangeAccent, size: 18),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orangeAccent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: _isBooking ? null : () => _placeOrderInFirestore(ctx),
-                      child: _isBooking
-                          ? const CircularProgressIndicator(color: Colors.black)
-                          : Text(
-                              "CONFIRM BOOKING (₹$_totalAmount)",
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
+                        onPressed: _isBooking ? null : () => _placeOrderInFirestore(ctx),
+                        child: _isBooking
+                            ? const CircularProgressIndicator(color: Colors.black)
+                            : Text(
+                                "CONFIRM BOOKING (₹$_totalAmount)",
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
                               ),
-                            ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },
@@ -447,11 +480,10 @@ class _ServiceBodyState extends State<ServiceBody> {
                         ),
                       ),
                   ],
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
