@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../services/notification_service.dart';
 
 class ProviderRegistrationScreen extends StatefulWidget {
   const ProviderRegistrationScreen({Key? key}) : super(key: key);
@@ -33,6 +35,133 @@ class _ProviderRegistrationScreenState
     'Painter',
     'AC Repair',
   ];
+
+  StreamSubscription<QuerySnapshot>? _orderStreamSubscription;
+  final Set<String> _shownOrderPopupIds = {};
+
+  @override
+  void dispose() {
+    _orderStreamSubscription?.cancel();
+    super.dispose();
+  }
+
+  // 🔔 Automatic Incoming Order Alert Popup on Screen
+  void _listenForNewIncomingOrders(String category, String partnerName, String partnerPhone) {
+    if (_orderStreamSubscription != null) return;
+
+    _orderStreamSubscription = FirebaseFirestore.instance
+        .collection('bookings')
+        .where('category', isEqualTo: category)
+        .snapshots()
+        .listen((snapshot) {
+      for (var change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          final data = change.doc.data() as Map<String, dynamic>;
+          final orderId = change.doc.id;
+          final status = data['status'] ?? '';
+
+          if (status == 'Partner Assigned' && !_shownOrderPopupIds.contains(orderId)) {
+            _shownOrderPopupIds.add(orderId);
+            
+            // Trigger Phone Top Banner Notification
+            NotificationService.showInstantNotification(
+              "🔔 New $category Order Received!",
+              "${data['customerName']} booked an order of ₹${data['totalAmount']}",
+            );
+
+            // Pop-up Alert Dialog on Mobile Screen
+            _showIncomingOrderModal(orderId, data, partnerName, partnerPhone);
+          }
+        }
+      }
+    });
+  }
+
+  void _showIncomingOrderModal(
+      String orderId, Map<String, dynamic> orderData, String partnerName, String partnerPhone) {
+    if (!mounted) return;
+
+    final customerName = orderData['customerName'] ?? 'Customer';
+    final amount = orderData['totalAmount'] ?? 0;
+    final scheduledDate = orderData['scheduledDate'] ?? 'Today';
+    final slot = orderData['scheduledSlot'] ?? '';
+    final address = orderData['customerAddress'] ?? 'Assam Local';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Colors.orangeAccent, width: 1.5),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orangeAccent.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.notifications_active, color: Colors.orangeAccent, size: 24),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              "NEW ORDER ALERT!",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Customer: $customerName",
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "Total Amount: ₹ $amount",
+              style: const TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold, fontSize: 15),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "Time: $scheduledDate ($slot)",
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "Location: $address",
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _updateOrderStatus(orderId, "Rejected by Partner", partnerName, partnerPhone);
+            },
+            child: const Text("REJECT", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _updateOrderStatus(
+                  orderId, "Accepted - Partner on the Way", partnerName, partnerPhone);
+            },
+            child: const Text("ACCEPT ORDER", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _makeCall(String phoneNumber) async {
     final clean = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
@@ -235,6 +364,9 @@ class _ProviderRegistrationScreenState
     final int jobs = data['totalJobs'] ?? 0;
     final String partnerUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
+    // 🚀 Start Realtime Popup Listener
+    _listenForNewIncomingOrders(category, name, partnerPhone);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -377,7 +509,6 @@ class _ProviderRegistrationScreenState
                 );
               }
 
-              // Filter out Rejected & Completed orders, and show only relevant active/pending jobs
               final allDocs = snapshot.data?.docs ?? [];
               final docs = allDocs.where((doc) {
                 final d = doc.data() as Map<String, dynamic>;
@@ -388,12 +519,11 @@ class _ProviderRegistrationScreenState
                   return false;
                 }
 
-                // If accepted, only show to the partner who accepted it
                 if (status.contains("Accepted")) {
                   return assignedPartnerId == partnerUid;
                 }
 
-                return true; // Pending orders show to all in this category
+                return true;
               }).toList();
 
               if (docs.isEmpty) {
