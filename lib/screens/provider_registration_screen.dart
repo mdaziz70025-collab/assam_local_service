@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/notification_service.dart';
+import 'chat_screen.dart';
 
 class ProviderRegistrationScreen extends StatefulWidget {
   const ProviderRegistrationScreen({Key? key}) : super(key: key);
@@ -178,6 +179,76 @@ class _ProviderRegistrationScreenState
     );
   }
 
+  // 🔐 Verify OTP Dialog before completing job
+  void _showOtpVerificationDialog(String orderId, String correctOtp, int orderAmount, String partnerName, String partnerPhone) {
+    final otpController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.lock_clock, color: Colors.orangeAccent),
+            SizedBox(width: 8),
+            Text("Enter Completion OTP", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Ask the customer for the 4-digit completion code shown on their screen.",
+              style: TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: otpController,
+              keyboardType: TextInputType.number,
+              maxLength: 4,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.orangeAccent, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 8),
+              decoration: InputDecoration(
+                counterText: "",
+                filled: true,
+                fillColor: const Color(0xFF0F172A),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel", style: TextStyle(color: Colors.white38)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () {
+              if (otpController.text.trim() == correctOtp) {
+                Navigator.pop(ctx);
+                _updateOrderStatus(orderId, "Service Completed", partnerName, partnerPhone, isCompleted: true, earnedAmount: orderAmount);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("❌ Invalid OTP! Please ask customer for correct 4-digit code."),
+                    backgroundColor: Colors.redAccent,
+                  ),
+                );
+              }
+            },
+            child: const Text("VERIFY & FINISH", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _makeCall(String phoneNumber) async {
     final clean = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
     final Uri uri = Uri(scheme: 'tel', path: clean);
@@ -199,7 +270,6 @@ class _ProviderRegistrationScreenState
     }
   }
 
-  // ✏️ Edit Profile Bottom Sheet
   void _openEditProfileSheet(Map<String, dynamic> data) {
     final editName = TextEditingController(text: data['name'] ?? '');
     final editPhone = TextEditingController(text: data['phone'] ?? '');
@@ -363,15 +433,7 @@ class _ProviderRegistrationScreenState
     if (!_formKey.currentState!.validate()) return;
 
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Error: Please log in before registering."),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
+    if (user == null) return;
 
     setState(() => _isSaving = true);
 
@@ -390,6 +452,7 @@ class _ProviderRegistrationScreenState
         'isVerified': true,
         'rating': 5.0,
         'totalJobs': 0,
+        'totalEarnings': 0,
         'isOnline': true,
         'registeredAt': FieldValue.serverTimestamp(),
       });
@@ -405,24 +468,8 @@ class _ProviderRegistrationScreenState
       setState(() {});
     } catch (e) {
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          title: const Text("Registration Issue",
-              style: TextStyle(color: Colors.white)),
-          content: Text(
-            "Database write failed.\nPlease check Firebase Rules.\n\nDetails: $e",
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text("OK",
-                  style: TextStyle(color: Colors.orangeAccent)),
-            ),
-          ],
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Registration Failed: $e"), backgroundColor: Colors.redAccent),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -435,6 +482,7 @@ class _ProviderRegistrationScreenState
     String partnerName,
     String partnerPhone, {
     bool isCompleted = false,
+    int earnedAmount = 0,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
     try {
@@ -455,6 +503,7 @@ class _ProviderRegistrationScreenState
             .doc(user.uid)
             .update({
           'totalJobs': FieldValue.increment(1),
+          'totalEarnings': FieldValue.increment(earnedAmount),
         });
       }
 
@@ -462,7 +511,7 @@ class _ProviderRegistrationScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(isCompleted
-              ? "🎉 Job Completed & Cash Collected!"
+              ? "🎉 OTP Verified! ₹$earnedAmount Added to Wallet."
               : "Order status: $newStatus"),
           backgroundColor:
               isCompleted ? Colors.green : Colors.orangeAccent,
@@ -533,10 +582,10 @@ class _ProviderRegistrationScreenState
     final String partnerPhone = data['phone'] ?? '7002521291';
     final String category = data['category'] ?? 'Electrician';
     final String location = data['location'] ?? 'Assam';
-    final String experience = data['experience'] ?? 'Experienced';
     final int baseRate = data['baseRate'] ?? 299;
     final double rating = (data['rating'] ?? 5.0).toDouble();
     final int jobs = data['totalJobs'] ?? 0;
+    final int earnings = data['totalEarnings'] ?? 0;
     final String partnerUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     _listenForNewIncomingOrders(category, name, partnerPhone);
@@ -546,6 +595,7 @@ class _ProviderRegistrationScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 💼 Wallet & Partner Profile Header
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
@@ -618,7 +668,6 @@ class _ProviderRegistrationScreenState
                         ],
                       ),
                     ),
-                    // ✏️ Edit Profile Button
                     IconButton(
                       icon: Container(
                         padding: const EdgeInsets.all(6),
@@ -637,13 +686,14 @@ class _ProviderRegistrationScreenState
                 const Divider(color: Colors.white10),
                 const SizedBox(height: 8),
 
+                // 💰 Realtime Earnings Tracker
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatItem("Rating", "⭐ $rating"),
+                    _buildStatItem("Wallet Earned", "₹ $earnings", color: Colors.greenAccent),
                     _buildStatItem("Base Charge", "₹$baseRate"),
-                    _buildStatItem("Experience", experience),
                     _buildStatItem("Jobs", "$jobs Done"),
+                    _buildStatItem("Rating", "⭐ $rating"),
                   ],
                 ),
               ],
@@ -763,6 +813,8 @@ class _ProviderRegistrationScreenState
                   final String slot = orderData['scheduledSlot'] ?? '';
                   final String currentStatus =
                       orderData['status'] ?? 'Partner Assigned';
+                  final String completionOtp =
+                      orderData['completionOtp'] ?? '1234';
                   final bool isAccepted = currentStatus.contains("Accepted");
 
                   return Container(
@@ -841,67 +893,64 @@ class _ProviderRegistrationScreenState
                                   Expanded(
                                     child: ElevatedButton.icon(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            const Color(0xFF25D366),
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10)),
+                                        backgroundColor: const Color(0xFF25D366),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                       ),
-                                      icon: const Icon(Icons.chat,
-                                          color: Colors.white, size: 16),
-                                      label: const Text("WhatsApp",
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold)),
-                                      onPressed: () => _openWhatsApp(
-                                          custPhone, customerName),
+                                      icon: const Icon(Icons.chat, color: Colors.white, size: 16),
+                                      label: const Text("WhatsApp", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                                      onPressed: () => _openWhatsApp(custPhone, customerName),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 6),
                                   Expanded(
                                     child: ElevatedButton.icon(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.orangeAccent,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10)),
+                                        backgroundColor: Colors.blueAccent,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                       ),
-                                      icon: const Icon(Icons.call,
-                                          color: Colors.black, size: 16),
-                                      label: const Text("Call Customer",
-                                          style: TextStyle(
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.bold)),
-                                      onPressed: () => _makeCall(custPhone),
+                                      icon: const Icon(Icons.message, color: Colors.white, size: 16),
+                                      label: const Text("In-App Chat", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ChatScreen(
+                                              orderId: orderId,
+                                              receiverName: customerName,
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  IconButton(
+                                    style: IconButton.styleFrom(backgroundColor: Colors.orangeAccent),
+                                    icon: const Icon(Icons.call, color: Colors.black, size: 18),
+                                    onPressed: () => _makeCall(custPhone),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
 
+                              // 🔐 OTP Verification Finish Button
                               SizedBox(
                                 width: double.infinity,
                                 child: OutlinedButton(
                                   style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(
-                                        color: Colors.greenAccent),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10)),
+                                    side: const BorderSide(color: Colors.greenAccent),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                   ),
-                                  onPressed: () => _updateOrderStatus(
+                                  onPressed: () => _showOtpVerificationDialog(
                                     orderId,
-                                    "Service Completed",
+                                    completionOtp,
+                                    amount,
                                     name,
                                     partnerPhone,
-                                    isCompleted: true,
                                   ),
                                   child: const Text(
-                                    "✔ MARK JOB COMPLETED & COLLECT CASH",
-                                    style: TextStyle(
-                                        color: Colors.greenAccent,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12),
+                                    "✔ ENTER CUSTOMER OTP & FINISH JOB",
+                                    style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 12),
                                   ),
                                 ),
                               ),
@@ -971,13 +1020,13 @@ class _ProviderRegistrationScreenState
     );
   }
 
-  Widget _buildStatItem(String label, String value) {
+  Widget _buildStatItem(String label, String value, {Color color = Colors.white}) {
     return Column(
       children: [
         Text(
           value,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: color,
             fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
