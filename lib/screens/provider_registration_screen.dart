@@ -48,7 +48,7 @@ class _ProviderRegistrationScreenState
       cleanNumber = '91$cleanNumber';
     }
     final Uri uri = Uri.parse(
-      "https://wa.me/$cleanNumber?text=Hello%20$name,%20I%20accepted%20your%20service%20booking%20via%20Assam%20Local%20Service.",
+      "https://wa.me/$cleanNumber?text=Hello%20$name,%20I%20am%20your%20service%20partner%20from%20Assam%20Local%20Service.",
     );
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -141,6 +141,7 @@ class _ProviderRegistrationScreenState
         'status': newStatus,
         'assignedPartnerName': partnerName,
         'partnerPhone': partnerPhone,
+        'assignedPartnerId': user?.uid ?? '',
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
@@ -232,6 +233,7 @@ class _ProviderRegistrationScreenState
     final int baseRate = data['baseRate'] ?? 299;
     final double rating = (data['rating'] ?? 5.0).toDouble();
     final int jobs = data['totalJobs'] ?? 0;
+    final String partnerUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -375,7 +377,26 @@ class _ProviderRegistrationScreenState
                 );
               }
 
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              // Filter out Rejected & Completed orders, and show only relevant active/pending jobs
+              final allDocs = snapshot.data?.docs ?? [];
+              final docs = allDocs.where((doc) {
+                final d = doc.data() as Map<String, dynamic>;
+                final status = d['status'] ?? '';
+                final assignedPartnerId = d['assignedPartnerId'] ?? '';
+
+                if (status == "Rejected by Partner" || status == "Service Completed") {
+                  return false;
+                }
+
+                // If accepted, only show to the partner who accepted it
+                if (status.contains("Accepted")) {
+                  return assignedPartnerId == partnerUid;
+                }
+
+                return true; // Pending orders show to all in this category
+              }).toList();
+
+              if (docs.isEmpty) {
                 return Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
@@ -388,13 +409,13 @@ class _ProviderRegistrationScreenState
                       Icon(Icons.radar, color: Colors.orangeAccent, size: 36),
                       SizedBox(height: 8),
                       Text(
-                        "Listening for nearby requests...",
+                        "No new orders right now",
                         style: TextStyle(
                             color: Colors.white70, fontWeight: FontWeight.w600),
                       ),
                       SizedBox(height: 4),
                       Text(
-                        "New orders for your category will show here in real-time.",
+                        "New incoming requests in your area will appear here.",
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white38, fontSize: 12),
                       ),
@@ -402,8 +423,6 @@ class _ProviderRegistrationScreenState
                   ),
                 );
               }
-
-              final docs = snapshot.data!.docs;
 
               return ListView.separated(
                 shrinkWrap: true,
@@ -427,7 +446,6 @@ class _ProviderRegistrationScreenState
                   final String currentStatus =
                       orderData['status'] ?? 'Partner Assigned';
                   final bool isAccepted = currentStatus.contains("Accepted");
-                  final bool isCompleted = currentStatus.contains("Completed");
 
                   return Container(
                     padding: const EdgeInsets.all(16),
@@ -435,11 +453,9 @@ class _ProviderRegistrationScreenState
                       color: const Color(0xFF1E293B),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isCompleted
-                            ? Colors.white12
-                            : (isAccepted
-                                ? Colors.green.withOpacity(0.5)
-                                : Colors.orangeAccent.withOpacity(0.3)),
+                        color: isAccepted
+                            ? Colors.green.withOpacity(0.5)
+                            : Colors.orangeAccent.withOpacity(0.3),
                       ),
                     ),
                     child: Column(
@@ -499,27 +515,9 @@ class _ProviderRegistrationScreenState
                         const Divider(color: Colors.white10),
                         const SizedBox(height: 8),
 
-                        if (isCompleted)
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.white10,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Text(
-                              "🎉 Service Completed (Cash Collected)",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12),
-                            ),
-                          )
-                        else if (isAccepted)
+                        if (isAccepted)
                           Column(
                             children: [
-                              // 📞 Direct Call & WhatsApp to Customer
                               Row(
                                 children: [
                                   Expanded(
