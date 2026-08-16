@@ -29,25 +29,37 @@ class NotificationService {
         AndroidNotification? android = message.notification?.android;
 
         if (notification != null && android != null) {
-          _localNotifications.show(
-            notification.hashCode,
-            notification.title,
-            notification.body,
-            const NotificationDetails(
-              android: AndroidNotificationDetails(
-                'assam_local_channel',
-                'Assam Local Service Alerts',
-                importance: Importance.max,
-                priority: Priority.high,
-                icon: '@mipmap/ic_launcher',
-              ),
-            ),
+          showInstantNotification(
+            notification.title ?? 'Assam Local Service',
+            notification.body ?? '',
           );
         }
       });
 
       await saveDeviceToken();
     }
+  }
+
+  // 🔔 Method for showing instant banner alerts on device
+  static Future<void> showInstantNotification(String title, String body) async {
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'assam_local_channel',
+      'Assam Local Service Alerts',
+      channelDescription: 'Incoming service orders and updates',
+      importance: Importance.max,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+    );
+
+    const NotificationDetails platformDetails =
+        NotificationDetails(android: androidDetails);
+
+    await _localNotifications.show(
+      DateTime.now().millisecond,
+      title,
+      body,
+      platformDetails,
+    );
   }
 
   static Future<void> saveDeviceToken() async {
