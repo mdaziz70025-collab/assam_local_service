@@ -137,7 +137,7 @@ class _ServiceBodyState extends State<ServiceBody> {
         }
       });
 
-      // 🔐 Generate 4-digit secret OTP
+      // 4-digit secret OTP
       final String completionOtp = (1000 + Random().nextInt(9000)).toString();
 
       await FirebaseFirestore.instance.collection('bookings').add({
@@ -480,10 +480,11 @@ class _ServiceBodyState extends State<ServiceBody> {
                         ),
                       ),
                   ],
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
+        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
