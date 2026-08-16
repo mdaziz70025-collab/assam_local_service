@@ -45,8 +45,8 @@ class _ProviderRegistrationScreenState
     super.dispose();
   }
 
-  // 🔔 Automatic Incoming Order Alert Popup on Screen
-  void _listenForNewIncomingOrders(String category, String partnerName, String partnerPhone) {
+  void _listenForNewIncomingOrders(
+      String category, String partnerName, String partnerPhone) {
     if (_orderStreamSubscription != null) return;
 
     _orderStreamSubscription = FirebaseFirestore.instance
@@ -60,16 +60,15 @@ class _ProviderRegistrationScreenState
           final orderId = change.doc.id;
           final status = data['status'] ?? '';
 
-          if (status == 'Partner Assigned' && !_shownOrderPopupIds.contains(orderId)) {
+          if (status == 'Partner Assigned' &&
+              !_shownOrderPopupIds.contains(orderId)) {
             _shownOrderPopupIds.add(orderId);
-            
-            // Trigger Phone Top Banner Notification
+
             NotificationService.showInstantNotification(
               "🔔 New $category Order Received!",
               "${data['customerName']} booked an order of ₹${data['totalAmount']}",
             );
 
-            // Pop-up Alert Dialog on Mobile Screen
             _showIncomingOrderModal(orderId, data, partnerName, partnerPhone);
           }
         }
@@ -77,8 +76,8 @@ class _ProviderRegistrationScreenState
     });
   }
 
-  void _showIncomingOrderModal(
-      String orderId, Map<String, dynamic> orderData, String partnerName, String partnerPhone) {
+  void _showIncomingOrderModal(String orderId, Map<String, dynamic> orderData,
+      String partnerName, String partnerPhone) {
     if (!mounted) return;
 
     final customerName = orderData['customerName'] ?? 'Customer';
@@ -104,12 +103,16 @@ class _ProviderRegistrationScreenState
                 color: Colors.orangeAccent.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.notifications_active, color: Colors.orangeAccent, size: 24),
+              child: const Icon(Icons.notifications_active,
+                  color: Colors.orangeAccent, size: 24),
             ),
             const SizedBox(width: 10),
             const Text(
               "NEW ORDER ALERT!",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16),
             ),
           ],
         ),
@@ -119,12 +122,18 @@ class _ProviderRegistrationScreenState
           children: [
             Text(
               "Customer: $customerName",
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16),
             ),
             const SizedBox(height: 6),
             Text(
               "Total Amount: ₹ $amount",
-              style: const TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold, fontSize: 15),
+              style: const TextStyle(
+                  color: Colors.orangeAccent,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15),
             ),
             const SizedBox(height: 6),
             Text(
@@ -142,21 +151,27 @@ class _ProviderRegistrationScreenState
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              _updateOrderStatus(orderId, "Rejected by Partner", partnerName, partnerPhone);
+              _updateOrderStatus(orderId, "Rejected by Partner", partnerName,
+                  partnerPhone);
             },
-            child: const Text("REJECT", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            child: const Text("REJECT",
+                style: TextStyle(
+                    color: Colors.redAccent, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {
               Navigator.pop(ctx);
-              _updateOrderStatus(
-                  orderId, "Accepted - Partner on the Way", partnerName, partnerPhone);
+              _updateOrderStatus(orderId, "Accepted - Partner on the Way",
+                  partnerName, partnerPhone);
             },
-            child: const Text("ACCEPT ORDER", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text("ACCEPT ORDER",
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -182,6 +197,166 @@ class _ProviderRegistrationScreenState
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+
+  // ✏️ Edit Profile Bottom Sheet
+  void _openEditProfileSheet(Map<String, dynamic> data) {
+    final editName = TextEditingController(text: data['name'] ?? '');
+    final editPhone = TextEditingController(text: data['phone'] ?? '');
+    final editExp = TextEditingController(text: data['experience'] ?? '');
+    final editRate = TextEditingController(text: (data['baseRate'] ?? 299).toString());
+    final editLoc = TextEditingController(text: data['location'] ?? '');
+    String editCat = data['category'] ?? 'Electrician';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            top: 20,
+            left: 20,
+            right: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Edit Partner Profile",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  controller: editName,
+                  label: "Full Name",
+                  hint: "Name",
+                  icon: Icons.person_outline,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: editPhone,
+                  label: "Mobile Number",
+                  hint: "70025XXXXX",
+                  icon: Icons.phone_android,
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F172A),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: editCat,
+                      dropdownColor: const Color(0xFF1E293B),
+                      isExpanded: true,
+                      icon: const Icon(Icons.keyboard_arrow_down,
+                          color: Colors.orangeAccent),
+                      style: const TextStyle(color: Colors.white, fontSize: 15),
+                      items: _categories.map((String cat) {
+                        return DropdownMenuItem<String>(
+                          value: cat,
+                          child: Text(cat),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) setModalState(() => editCat = val);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: editExp,
+                  label: "Experience",
+                  hint: "e.g. 5 years",
+                  icon: Icons.work_outline,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: editRate,
+                  label: "Base Rate (₹)",
+                  hint: "e.g. 150",
+                  icon: Icons.currency_rupee,
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: editLoc,
+                  label: "Location / Gaon",
+                  hint: "e.g. Kodalduwa",
+                  icon: Icons.location_on_outlined,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orangeAccent,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () async {
+                      final uid = FirebaseAuth.instance.currentUser?.uid;
+                      if (uid != null) {
+                        await FirebaseFirestore.instance
+                            .collection('providers')
+                            .doc(uid)
+                            .update({
+                          'name': editName.text.trim(),
+                          'phone': editPhone.text.trim(),
+                          'category': editCat,
+                          'experience': editExp.text.trim(),
+                          'baseRate': int.tryParse(editRate.text.trim()) ?? 150,
+                          'location': editLoc.text.trim(),
+                        });
+                        Navigator.pop(ctx);
+                        setState(() {});
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Profile updated successfully! ✅"),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text(
+                      "SAVE CHANGES",
+                      style: TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _submitPartnerToFirestore() async {
@@ -364,7 +539,6 @@ class _ProviderRegistrationScreenState
     final int jobs = data['totalJobs'] ?? 0;
     final String partnerUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-    // 🚀 Start Realtime Popup Listener
     _listenForNewIncomingOrders(category, name, partnerPhone);
 
     return SingleChildScrollView(
@@ -444,6 +618,19 @@ class _ProviderRegistrationScreenState
                         ],
                       ),
                     ),
+                    // ✏️ Edit Profile Button
+                    IconButton(
+                      icon: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white10,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.edit,
+                            color: Colors.orangeAccent, size: 18),
+                      ),
+                      onPressed: () => _openEditProfileSheet(data),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -515,7 +702,8 @@ class _ProviderRegistrationScreenState
                 final status = d['status'] ?? '';
                 final assignedPartnerId = d['assignedPartnerId'] ?? '';
 
-                if (status == "Rejected by Partner" || status == "Service Completed") {
+                if (status == "Rejected by Partner" ||
+                    status == "Service Completed") {
                   return false;
                 }
 
