@@ -7,6 +7,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'login_screen.dart';
 import 'order_tracking_screen.dart';
+import 'chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -21,6 +22,39 @@ class _HomeScreenState extends State<HomeScreen> {
   String _userLocation = "Detecting Assam location...";
   String _searchQuery = "";
   bool _isLocating = false;
+
+  // 🌐 Multilingual State (en, as, bn)
+  String _selectedLang = 'en';
+
+  final Map<String, Map<String, String>> _langStrings = {
+    'en': {
+      'explore': 'Explore',
+      'bookings': 'Bookings',
+      'account': 'Account',
+      'offer': 'Get Flat 20% OFF\nOn Doorstep Services',
+      'select_service': 'Select A Service',
+      'search': "Search 'Electrician', 'AC', 'Plumber'...",
+      'otp_badge': "Completion OTP:",
+    },
+    'as': {
+      'explore': 'অন্বেষণ',
+      'bookings': 'অৰ্ডাৰসমূহ',
+      'account': 'একাউণ্ট',
+      'offer': 'ঘৰুৱা সেৱাত পাওক\n২০% ৰেহাই',
+      'select_service': 'সেৱা বাছক',
+      'search': 'ইলেক্ট্ৰিচিয়ান, প্লাম্বাৰ সন্ধান কৰক...',
+      'otp_badge': 'সমাপ্তি অ’টিপি:',
+    },
+    'bn': {
+      'explore': 'সার্ভিস',
+      'bookings': 'অর্ডার',
+      'account': 'অ্যাকাউন্ট',
+      'offer': 'হোম সার্ভিসে পান\n২০% ডিসকাউন্ট',
+      'select_service': 'সার্ভিস বেছে নিন',
+      'search': 'ইলেকট্রিশিয়ান, প্লাম্বার খুঁজুন...',
+      'otp_badge': 'সমাপ্তি ওটিপি:',
+    }
+  };
 
   final List<String> _popularLocalities = [
     "Guwahati (Kamrup Metro)",
@@ -111,14 +145,6 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
 
-      if (permission == LocationPermission.deniedForever) {
-        setState(() {
-          _userLocation = "Guwahati, Assam (Enable in Settings)";
-          _isLocating = false;
-        });
-        return;
-      }
-
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
@@ -178,56 +204,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.orangeAccent.withOpacity(0.15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.location_on_rounded,
-                color: Colors.orangeAccent,
-                size: 48,
-              ),
-            ),
             const SizedBox(height: 20),
             const Text(
               "Where do you want your service?",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              "Works across all villages, towns & cities in Assam.",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white60, fontSize: 13),
-            ),
-            const SizedBox(height: 28),
-
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 48,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orangeAccent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 icon: const Icon(Icons.my_location, color: Colors.black),
                 label: const Text(
-                  "Detect My Current GPS Location",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
+                  "Detect Current GPS Location",
+                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                 ),
                 onPressed: () {
                   Navigator.pop(ctx);
@@ -235,227 +230,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
             ),
-            const SizedBox(height: 12),
-
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Colors.white.withOpacity(0.2)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                icon: const Icon(Icons.search, color: Colors.white),
-                label: const Text(
-                  "Search Village / District Manually",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  _openManualAddressSearchSheet();
-                },
-              ),
-            ),
-            const SizedBox(height: 10),
           ],
         ),
       ),
     );
   }
 
-  void _openManualAddressSearchSheet() {
-    String searchLocText = "";
-    final customLocController = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF0F172A),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) {
-          final filteredList = _popularLocalities
-              .where((loc) =>
-                  loc.toLowerCase().contains(searchLocText.toLowerCase()))
-              .toList();
-
-          return DraggableScrollableSheet(
-            initialChildSize: 0.85,
-            minChildSize: 0.5,
-            maxChildSize: 0.95,
-            expand: false,
-            builder: (_, scrollController) => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.pop(ctx),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        "Search Village / Town",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white10),
-                    ),
-                    child: TextField(
-                      controller: customLocController,
-                      style: const TextStyle(color: Colors.white),
-                      onChanged: (val) {
-                        setModalState(() => searchLocText = val);
-                      },
-                      decoration: InputDecoration(
-                        icon: const Icon(Icons.search, color: Colors.orangeAccent),
-                        hintText: "Type any Gaon, Town or Landmark in Assam...",
-                        hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-                        border: InputBorder.none,
-                        suffixIcon: customLocController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.check_circle, color: Colors.greenAccent),
-                                onPressed: () {
-                                  setState(() => _userLocation = customLocController.text.trim());
-                                  Navigator.pop(ctx);
-                                },
-                              )
-                            : null,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  ListTile(
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      _fetchLiveLocation();
-                    },
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    tileColor: const Color(0xFF1E293B),
-                    leading: const Icon(Icons.my_location, color: Colors.orangeAccent),
-                    title: const Text(
-                      "Detect exact current location",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: const Text(
-                      "Uses high accuracy GPS",
-                      style: TextStyle(color: Colors.white38, fontSize: 12),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  const Text(
-                    "POPULAR DISTRICTS & TOWNS IN ASSAM",
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white38,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  Expanded(
-                    child: ListView.separated(
-                      controller: scrollController,
-                      itemCount: filteredList.length,
-                      separatorBuilder: (_, __) => const Divider(
-                        color: Colors.white10,
-                        height: 1,
-                      ),
-                      itemBuilder: (context, i) {
-                        final loc = filteredList[i];
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.05),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.location_on_outlined,
-                                color: Colors.white70, size: 18),
-                          ),
-                          title: Text(
-                            loc,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          onTap: () {
-                            setState(() => _userLocation = loc);
-                            Navigator.pop(ctx);
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   Future<void> _handleSignOut(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text("Log Out",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: const Text("Are you sure you want to log out of Assam Local Service?",
-            style: TextStyle(color: Colors.white70)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text("Log Out", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
     await FirebaseAuth.instance.signOut();
     await GoogleSignIn().signOut();
 
@@ -470,14 +251,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = _langStrings[_selectedLang]!;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
       body: SafeArea(
         child: IndexedStack(
           index: _currentIndex,
           children: [
-            _buildHomeTab(),
-            _buildBookingsTab(),
+            _buildHomeTab(t),
+            _buildBookingsTab(t),
             _buildProfileTab(),
           ],
         ),
@@ -492,18 +275,18 @@ class _HomeScreenState extends State<HomeScreen> {
           selectedItemColor: Colors.orangeAccent,
           unselectedItemColor: Colors.white54,
           onTap: (idx) => setState(() => _currentIndex = idx),
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_filled),
-              label: "Explore",
+              icon: const Icon(Icons.home_filled),
+              label: t['explore']!,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_month_outlined),
-              label: "Bookings",
+              icon: const Icon(Icons.calendar_month_outlined),
+              label: t['bookings']!,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              label: "Account",
+              icon: const Icon(Icons.person_outline),
+              label: t['account']!,
             ),
           ],
         ),
@@ -511,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHomeTab() {
+  Widget _buildHomeTab(Map<String, String> t) {
     final List<Map<String, dynamic>> allCategories = [
       {"name": "Electrician", "icon": Icons.electrical_services, "color": Colors.amber},
       {"name": "Plumber", "icon": Icons.plumbing, "color": Colors.cyan},
@@ -521,67 +304,71 @@ class _HomeScreenState extends State<HomeScreen> {
       {"name": "Carpenter", "icon": Icons.handyman, "color": Colors.orange},
     ];
 
-    final filteredCategories = allCategories
-        .where((c) => c["name"]
-            .toString()
-            .toLowerCase()
-            .contains(_searchQuery.toLowerCase()))
-        .toList();
-
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GestureDetector(
-            onTap: _openLocationBottomSheet,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.06)),
-              ),
-              child: Row(
-                children: [
-                  _isLocating
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.orangeAccent,
-                          ),
-                        )
-                      : const Icon(Icons.location_on, color: Colors.orangeAccent, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          // 🌐 Top Bar with Language Selector Toggle
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: _openLocationBottomSheet,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
                       children: [
-                        const Text(
-                          "Service Location (Assam)",
-                          style: TextStyle(color: Colors.white38, fontSize: 10),
-                        ),
-                        Text(
-                          _userLocation,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                        const Icon(Icons.location_on, color: Colors.orangeAccent, size: 18),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            _userLocation,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
-                  const Icon(Icons.keyboard_arrow_down, color: Colors.white54, size: 20),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+
+              // Language Switch Menu
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orangeAccent.withOpacity(0.3)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedLang,
+                    dropdownColor: const Color(0xFF1E293B),
+                    icon: const Icon(Icons.language, color: Colors.orangeAccent, size: 18),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                    items: const [
+                      DropdownMenuItem(value: 'en', child: Text("ENG")),
+                      DropdownMenuItem(value: 'as', child: Text("অসমীয়া")),
+                      DropdownMenuItem(value: 'bn', child: Text("বাংলা")),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedLang = val);
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
 
+          // Search Bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
@@ -591,16 +378,17 @@ class _HomeScreenState extends State<HomeScreen> {
             child: TextField(
               style: const TextStyle(color: Colors.white),
               onChanged: (val) => setState(() => _searchQuery = val),
-              decoration: const InputDecoration(
-                icon: Icon(Icons.search, color: Colors.orangeAccent),
-                hintText: "Search 'Electrician', 'AC', 'Plumber'...",
-                hintStyle: TextStyle(color: Colors.white38, fontSize: 14),
+              decoration: InputDecoration(
+                icon: const Icon(Icons.search, color: Colors.orangeAccent),
+                hintText: t['search']!,
+                hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
                 border: InputBorder.none,
               ),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
 
+          // Banner Card
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),
@@ -612,53 +400,28 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black26,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    "SPECIAL ASSAM OFFER",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "Get Flat 20% OFF\nOn Doorstep Services",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    height: 1.2,
-                  ),
-                ),
-              ],
+            child: Text(
+              t['offer']!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                height: 1.2,
+              ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
-          const Text(
-            "Select A Service",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-            ),
+          Text(
+            t['select_service']!,
+            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: filteredCategories.length,
+            itemCount: allCategories.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3,
               mainAxisSpacing: 12,
@@ -666,7 +429,7 @@ class _HomeScreenState extends State<HomeScreen> {
               childAspectRatio: 0.95,
             ),
             itemBuilder: (context, i) {
-              final cat = filteredCategories[i];
+              final cat = allCategories[i];
               return GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(
@@ -694,11 +457,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 8),
                       Text(
                         cat["name"],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -711,14 +470,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ================= 📅 TAB 2: LIVE BOOKINGS WITH CALL & WHATSAPP =================
-  Widget _buildBookingsTab() {
+  // ================= 📅 TAB 2: LIVE BOOKINGS WITH OTP & CHAT =================
+  Widget _buildBookingsTab(Map<String, String> t) {
     final currentUserId = user?.uid;
     if (currentUserId == null) {
-      return const Center(
-        child: Text("Please log in to view your bookings.",
-            style: TextStyle(color: Colors.white60)),
-      );
+      return const Center(child: Text("Please log in.", style: TextStyle(color: Colors.white60)));
     }
 
     return StreamBuilder<QuerySnapshot>(
@@ -727,50 +483,16 @@ class _HomeScreenState extends State<HomeScreen> {
           .where('userId', isEqualTo: currentUserId)
           .snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Colors.orangeAccent),
-          );
-        }
-
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.orangeAccent.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.receipt_long,
-                        size: 55, color: Colors.orangeAccent),
-                  ),
-                  const SizedBox(height: 18),
-                  const Text(
-                    "No Active Bookings",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "When you book a service in Assam, your live orders will show here.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white60, fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-          );
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator(color: Colors.orangeAccent));
         }
 
         final docs = snapshot.data!.docs;
+        if (docs.isEmpty) {
+          return const Center(
+            child: Text("No Active Bookings", style: TextStyle(color: Colors.white60, fontSize: 16)),
+          );
+        }
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
@@ -784,7 +506,9 @@ class _HomeScreenState extends State<HomeScreen> {
             final status = data['status'] ?? "Partner Assigned";
             final partnerName = data['assignedPartnerName'] ?? "Aziz";
             final partnerPhone = data['partnerPhone'] ?? "7002521291";
+            final completionOtp = data['completionOtp'] ?? "1234";
             final bool isAccepted = status.contains("Accepted");
+            final bool isCompleted = status.contains("Completed");
 
             return Container(
               margin: const EdgeInsets.only(bottom: 14),
@@ -793,9 +517,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: const Color(0xFF1E293B),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isAccepted
-                      ? Colors.green.withOpacity(0.5)
-                      : Colors.orangeAccent.withOpacity(0.3),
+                  color: isAccepted ? Colors.green.withOpacity(0.5) : Colors.orangeAccent.withOpacity(0.3),
                 ),
               ),
               child: Column(
@@ -804,114 +526,95 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        category,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      Text(category, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isAccepted
-                              ? Colors.green.withOpacity(0.2)
-                              : Colors.orangeAccent.withOpacity(0.15),
+                          color: isAccepted ? Colors.green.withOpacity(0.2) : Colors.orangeAccent.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           status,
-                          style: TextStyle(
-                            color: isAccepted ? Colors.greenAccent : Colors.orangeAccent,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(color: isAccepted ? Colors.greenAccent : Colors.orangeAccent, fontSize: 11, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
+
+                  // 🔐 4-Digit Completion OTP Banner
+                  if (!isCompleted)
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.orangeAccent.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(t['otp_badge']!, style: const TextStyle(color: Colors.orangeAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                          Text(
+                            completionOtp,
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 4),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   Row(
                     children: [
-                      const Icon(Icons.access_time,
-                          size: 16, color: Colors.orangeAccent),
+                      const Icon(Icons.access_time, size: 14, color: Colors.orangeAccent),
                       const SizedBox(width: 6),
-                      Text("$date ($slot)",
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 13)),
+                      Text("$date ($slot)", style: const TextStyle(color: Colors.white70, fontSize: 12)),
                       const Spacer(),
-                      Text("₹ $totalAmount",
-                          style: const TextStyle(
-                              color: Colors.orangeAccent,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16)),
+                      Text("₹ $totalAmount", style: const TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold, fontSize: 16)),
                     ],
                   ),
 
-                  // 📞 Direct Call & WhatsApp Buttons for Customer when Accepted
                   if (isAccepted) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     const Divider(color: Colors.white10),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         Expanded(
                           child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF25D366),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                            ),
+                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
                             icon: const Icon(Icons.chat, color: Colors.white, size: 16),
-                            label: const Text("WhatsApp",
-                                style: TextStyle(
-                                    color: Colors.white, fontWeight: FontWeight.bold)),
+                            label: const Text("WhatsApp", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                             onPressed: () => _openWhatsApp(partnerPhone, partnerName),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         Expanded(
                           child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orangeAccent,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                            ),
-                            icon: const Icon(Icons.call, color: Colors.black, size: 16),
-                            label: const Text("Call Partner",
-                                style: TextStyle(
-                                    color: Colors.black, fontWeight: FontWeight.bold)),
-                            onPressed: () => _makeCall(partnerPhone),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+                            icon: const Icon(Icons.message, color: Colors.white, size: 16),
+                            label: const Text("In-App Chat", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChatScreen(
+                                    orderId: docs[i].id,
+                                    receiverName: partnerName,
+                                  ),
+                                ),
+                              );
+                            },
                           ),
+                        ),
+                        const SizedBox(width: 6),
+                        IconButton(
+                          style: IconButton.styleFrom(backgroundColor: Colors.orangeAccent),
+                          icon: const Icon(Icons.call, color: Colors.black, size: 18),
+                          onPressed: () => _makeCall(partnerPhone),
                         ),
                       ],
                     ),
                   ],
-
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              OrderTrackingScreen(orderId: docs[i].id),
-                        ),
-                      );
-                    },
-                    child: const Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        "View Order Timeline →",
-                        style: TextStyle(
-                            color: Colors.white60,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             );
@@ -928,96 +631,45 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(16),
-            ),
+            decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16)),
             child: Row(
               children: [
                 CircleAvatar(
-                  radius: 32,
+                  radius: 28,
                   backgroundColor: Colors.orangeAccent,
-                  backgroundImage: user?.photoURL != null
-                      ? NetworkImage(user!.photoURL!)
-                      : null,
-                  child: user?.photoURL == null
-                      ? const Icon(Icons.person, size: 34, color: Colors.black)
-                      : null,
+                  child: const Icon(Icons.person, size: 28, color: Colors.black),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        user?.displayName ?? "Md Aziz",
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        user?.email ?? user?.phoneNumber ?? "No Email Associated",
-                        style: const TextStyle(color: Colors.white60, fontSize: 12),
-                      ),
+                      Text(user?.displayName ?? "Md Aziz", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                      const SizedBox(height: 2),
+                      Text(user?.email ?? user?.phoneNumber ?? "", style: const TextStyle(color: Colors.white60, fontSize: 12)),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 18),
-
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.location_on_outlined, color: Colors.orangeAccent),
-                  title: const Text("Current Saved Location",
-                      style: TextStyle(color: Colors.white, fontSize: 15)),
-                  subtitle: Text(_userLocation,
-                      style: const TextStyle(color: Colors.white60, fontSize: 12)),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded,
-                      size: 14, color: Colors.white38),
-                  onTap: _openLocationBottomSheet,
-                ),
-                const Divider(color: Colors.white10, height: 1, indent: 60),
-                ListTile(
-                  leading: const Icon(Icons.handyman_outlined, color: Colors.orangeAccent),
-                  title: const Text("Register as Service Partner",
-                      style: TextStyle(color: Colors.white, fontSize: 15)),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded,
-                      size: 14, color: Colors.white38),
-                  onTap: () => Navigator.pushNamed(context, '/registerPartner'),
-                ),
-              ],
-            ),
+          const SizedBox(height: 16),
+          ListTile(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            tileColor: const Color(0xFF1E293B),
+            leading: const Icon(Icons.handyman_outlined, color: Colors.orangeAccent),
+            title: const Text("Register as Service Partner", style: TextStyle(color: Colors.white, fontSize: 14)),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.white38),
+            onTap: () => Navigator.pushNamed(context, '/registerPartner'),
           ),
-          const SizedBox(height: 28),
-
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
-            height: 48,
+            height: 46,
             child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
               icon: const Icon(Icons.logout, color: Colors.white, size: 18),
-              label: const Text(
-                "LOGOUT",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
+              label: const Text("LOGOUT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               onPressed: () => _handleSignOut(context),
             ),
           ),
