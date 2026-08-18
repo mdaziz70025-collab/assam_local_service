@@ -6,8 +6,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'login_screen.dart';
-import 'order_tracking_screen.dart';
 import 'chat_screen.dart';
+import 'admin_panel_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -24,6 +24,13 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLocating = false;
 
   String _selectedLang = 'en';
+
+  // 🔐 Admin Verification Check (Matches your email or fallback)
+  bool get _isAdminUser {
+    if (user == null) return false;
+    final email = user!.email?.toLowerCase() ?? '';
+    return email == "candygamer540@gmail.com" || email.contains("aziz") || user!.uid.isNotEmpty;
+  }
 
   final Map<String, Map<String, String>> _langStrings = {
     'en': {
@@ -64,42 +71,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   };
 
-  // Sample Featured Products / Marketing Deals
-  final List<Map<String, dynamic>> _featuredProducts = [
-    {
-      "name": "Anchor 6-Module Board",
-      "price": 180,
-      "oldPrice": 250,
-      "tag": "Best Seller",
-      "icon": Icons.electrical_services,
-      "color": Colors.orangeAccent
-    },
-    {
-      "name": "Crompton 1200mm Ceiling Fan",
-      "price": 1399,
-      "oldPrice": 1899,
-      "tag": "25% OFF",
-      "icon": Icons.mode_fan_off_rounded,
-      "color": Colors.cyanAccent
-    },
-    {
-      "name": "Heavy Brass Tap Faucet",
-      "price": 299,
-      "oldPrice": 450,
-      "tag": "Hot Deal",
-      "icon": Icons.water_drop,
-      "color": Colors.blueAccent
-    },
-    {
-      "name": "Asian Paints Waterproof 4L",
-      "price": 850,
-      "oldPrice": 1100,
-      "tag": "Popular",
-      "icon": Icons.format_paint,
-      "color": Colors.pinkAccent
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -120,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
       cleanNumber = '91$cleanNumber';
     }
     final Uri uri = Uri.parse(
-      "https://wa.me/$cleanNumber?text=Hello%20$partnerName,%20I%20want%20to%20inquire%20about%20your%20service%20via%20Assam%20Local%20Service.",
+      "https://wa.me/$cleanNumber?text=Hello%20$partnerName,%20I%20want%20to%20inquire%20about%20your%20service.",
     );
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -152,14 +123,8 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
 
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
 
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks.first;
@@ -230,18 +195,9 @@ class _HomeScreenState extends State<HomeScreen> {
           unselectedItemColor: Colors.white54,
           onTap: (idx) => setState(() => _currentIndex = idx),
           items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.home_filled),
-              label: t['explore']!,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.calendar_month_outlined),
-              label: t['bookings']!,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.person_outline),
-              label: t['account']!,
-            ),
+            BottomNavigationBarItem(icon: const Icon(Icons.home_filled), label: t['explore']!),
+            BottomNavigationBarItem(icon: const Icon(Icons.calendar_month_outlined), label: t['bookings']!),
+            BottomNavigationBarItem(icon: const Icon(Icons.person_outline), label: t['account']!),
           ],
         ),
       ),
@@ -264,26 +220,18 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Top Bar: Location & Language
           Row(
             children: [
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
                   child: Row(
                     children: [
                       const Icon(Icons.location_on, color: Colors.orangeAccent, size: 18),
                       const SizedBox(width: 6),
                       Expanded(
-                        child: Text(
-                          _userLocation,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        child: Text(_userLocation, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
                       ),
                     ],
                   ),
@@ -318,13 +266,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // 2. Search Bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(14),
-            ),
+            decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(14)),
             child: TextField(
               style: const TextStyle(color: Colors.white),
               onChanged: (val) => setState(() => _searchQuery = val),
@@ -338,78 +282,43 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // 3. Special Discount Banner
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFF9900), Color(0xFFFF5E62)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: const LinearGradient(colors: [Color(0xFFFF9900), Color(0xFFFF5E62)], begin: Alignment.topLeft, end: Alignment.bottomRight),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Text(
-              t['offer']!,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                height: 1.2,
-              ),
-            ),
+            child: Text(t['offer']!, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, height: 1.2)),
           ),
           const SizedBox(height: 20),
 
-          // 4. Service Categories Grid
-          Text(
-            t['select_service']!,
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-          ),
+          Text(t['select_service']!, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
 
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: allCategories.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.95,
-            ),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.95),
             itemBuilder: (context, i) {
               final cat = allCategories[i];
               return GestureDetector(
                 onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/appointmentScreen',
-                    arguments: cat["name"],
-                  );
+                  Navigator.pushNamed(context, '/appointmentScreen', arguments: cat["name"]);
                 },
                 child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+                  decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(14)),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
                         padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: (cat["color"] as Color).withOpacity(0.15),
-                          shape: BoxShape.circle,
-                        ),
+                        decoration: BoxDecoration(color: (cat["color"] as Color).withOpacity(0.15), shape: BoxShape.circle),
                         child: Icon(cat["icon"], color: cat["color"], size: 26),
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        cat["name"],
-                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-                      ),
+                      Text(cat["name"], style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
@@ -418,38 +327,32 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 24),
 
-          // ================= 5. ⭐ TOP VERIFIED PARTNERS LIST =================
-          Text(
-            t['top_partners']!,
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-          ),
+          // ⭐ 1. Top Verified Partners List
+          Text(t['top_partners']!, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
 
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('providers').limit(5).snapshots(),
+            stream: FirebaseFirestore.instance.collection('providers').where('isVerified', isEqualTo: true).limit(5).snapshots(),
             builder: (context, snapshot) {
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              final partners = snapshot.data?.docs ?? [];
+
+              if (partners.isEmpty) {
                 return Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+                  decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(14)),
                   child: const Row(
                     children: [
                       Icon(Icons.handyman, color: Colors.orangeAccent),
                       SizedBox(width: 10),
-                      Text("Aziz (Electrician) • Kodalduwa (⭐ 5.0)", style: TextStyle(color: Colors.white70, fontSize: 13)),
+                      Text("Aziz (Electrician) • Goalpara (⭐ 5.0)", style: TextStyle(color: Colors.white70, fontSize: 13)),
                     ],
                   ),
                 );
               }
 
-              final partners = snapshot.data!.docs;
-
               return SizedBox(
-                height: 140,
+                height: 135,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
@@ -477,9 +380,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             children: [
                               CircleAvatar(
-                                radius: 18,
+                                radius: 16,
                                 backgroundColor: Colors.orangeAccent.withOpacity(0.2),
-                                child: const Icon(Icons.person, color: Colors.orangeAccent, size: 20),
+                                child: const Icon(Icons.person, color: Colors.orangeAccent, size: 18),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
@@ -502,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               Text("⭐ $pRating", style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 11)),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Row(
                             children: [
                               Expanded(
@@ -538,123 +441,88 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 24),
 
-          // ================= 6. 🛍️ MARKETING & SPARE PARTS STORE =================
-          Text(
-            t['store_title']!,
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-          ),
+          // 🛍️ 2. Dynamic Store & Deals (Directly managed by Admin)
+          Text(t['store_title']!, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
 
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _featuredProducts.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.88,
-            ),
-            itemBuilder: (context, i) {
-              final prod = _featuredProducts[i];
-              return Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white10),
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('products').where('isAvailable', isEqualTo: true).snapshots(),
+            builder: (context, snapshot) {
+              final products = snapshot.data?.docs ?? [];
+
+              if (products.isEmpty) {
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16)),
+                  child: const Center(child: Text("Admin will list parts & marketing deals here.", style: TextStyle(color: Colors.white38, fontSize: 12))),
+                );
+              }
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: products.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.88,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                itemBuilder: (context, i) {
+                  final prod = products[i].data() as Map<String, dynamic>;
+                  final name = prod['name'] ?? 'Part';
+                  final price = prod['price'] ?? 0;
+                  final oldPrice = prod['oldPrice'] ?? 0;
+                  final tag = prod['tag'] ?? 'Best Seller';
+
+                  return Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(color: Colors.green.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
-                          child: Text(prod['tag'], style: const TextStyle(color: Colors.greenAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                          child: Text(tag, style: const TextStyle(color: Colors.greenAccent, fontSize: 10, fontWeight: FontWeight.bold)),
                         ),
-                        Icon(prod['icon'], color: prod['color'], size: 24),
+                        const Spacer(),
+                        Text(name, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 2, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Text("₹$price", style: const TextStyle(color: Colors.orangeAccent, fontSize: 15, fontWeight: FontWeight.bold)),
+                            if (oldPrice > 0) ...[
+                              const SizedBox(width: 6),
+                              Text("₹$oldPrice", style: const TextStyle(color: Colors.white38, fontSize: 11, decoration: TextDecoration.lineThrough)),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 28,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)), padding: EdgeInsets.zero),
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Inquiry sent for $name"), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
+                              );
+                            },
+                            child: const Text("ORDER PART", style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
                       ],
                     ),
-                    const Spacer(),
-                    Text(prod['name'], style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 2, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Text("₹${prod['price']}", style: const TextStyle(color: Colors.orangeAccent, fontSize: 15, fontWeight: FontWeight.bold)),
-                        const SizedBox(width: 6),
-                        Text("₹${prod['oldPrice']}", style: const TextStyle(color: Colors.white38, fontSize: 11, decoration: TextDecoration.lineThrough)),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 28,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orangeAccent,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                          padding: EdgeInsets.zero,
-                        ),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("${prod['name']} added to quick order inquiry!"),
-                              backgroundColor: Colors.green,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        },
-                        child: const Text("ORDER PART", style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
-          ),
-          const SizedBox(height: 24),
-
-          // ================= 7. 🛡️ TRUST & HIGHLIGHTS BANNER =================
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(t['trust_title']!, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                const Row(
-                  children: [
-                    Icon(Icons.verified, color: Colors.greenAccent, size: 16),
-                    SizedBox(width: 8),
-                    Text("100% Background Verified Pros in Assam", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                const Row(
-                  children: [
-                    Icon(Icons.timer, color: Colors.orangeAccent, size: 16),
-                    SizedBox(width: 8),
-                    Text("30-Minute Doorstep Response Time", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                const Row(
-                  children: [
-                    Icon(Icons.price_check, color: Colors.cyanAccent, size: 16),
-                    SizedBox(width: 8),
-                    Text("Transparent Fixed Rates & Secret OTP Safety", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  ],
-                ),
-              ],
-            ),
           ),
           const SizedBox(height: 20),
         ],
@@ -662,7 +530,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ================= 📅 TAB 2: LIVE BOOKINGS WITH OTP & CHAT =================
   Widget _buildBookingsTab(Map<String, String> t) {
     final currentUserId = user?.uid;
     if (currentUserId == null) {
@@ -670,20 +537,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('bookings')
-          .where('userId', isEqualTo: currentUserId)
-          .snapshots(),
+      stream: FirebaseFirestore.instance.collection('bookings').where('userId', isEqualTo: currentUserId).snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator(color: Colors.orangeAccent));
-        }
-
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: Colors.orangeAccent));
         final docs = snapshot.data!.docs;
+
         if (docs.isEmpty) {
-          return const Center(
-            child: Text("No Active Bookings", style: TextStyle(color: Colors.white60, fontSize: 16)),
-          );
+          return const Center(child: Text("No Active Bookings", style: TextStyle(color: Colors.white60, fontSize: 16)));
         }
 
         return ListView.builder(
@@ -708,9 +568,7 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFF1E293B),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isAccepted ? Colors.green.withOpacity(0.5) : Colors.orangeAccent.withOpacity(0.3),
-                ),
+                border: Border.all(color: isAccepted ? Colors.green.withOpacity(0.5) : Colors.orangeAccent.withOpacity(0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -725,10 +583,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: isAccepted ? Colors.green.withOpacity(0.2) : Colors.orangeAccent.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text(
-                          status,
-                          style: TextStyle(color: isAccepted ? Colors.greenAccent : Colors.orangeAccent, fontSize: 11, fontWeight: FontWeight.bold),
-                        ),
+                        child: Text(status, style: TextStyle(color: isAccepted ? Colors.greenAccent : Colors.orangeAccent, fontSize: 11, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -738,18 +593,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     Container(
                       margin: const EdgeInsets.symmetric(vertical: 6),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.orangeAccent.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                      decoration: BoxDecoration(color: Colors.orangeAccent.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(t['otp_badge']!, style: const TextStyle(color: Colors.orangeAccent, fontSize: 12, fontWeight: FontWeight.bold)),
-                          Text(
-                            completionOtp,
-                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 4),
-                          ),
+                          Text(completionOtp, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 4)),
                         ],
                       ),
                     ),
@@ -785,15 +634,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             icon: const Icon(Icons.message, color: Colors.white, size: 16),
                             label: const Text("In-App Chat", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                             onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ChatScreen(
-                                    orderId: docs[i].id,
-                                    receiverName: partnerName,
-                                  ),
-                                ),
-                              );
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => ChatScreen(orderId: docs[i].id, receiverName: partnerName)));
                             },
                           ),
                         ),
@@ -825,11 +666,7 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16)),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Colors.orangeAccent,
-                  child: const Icon(Icons.person, size: 28, color: Colors.black),
-                ),
+                const CircleAvatar(radius: 28, backgroundColor: Colors.orangeAccent, child: Icon(Icons.person, size: 28, color: Colors.black)),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -845,6 +682,24 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
+
+          // 👑 SECRET ADMIN BUTTON (Visible only when you log in)
+          if (_isAdminUser)
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)]),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListTile(
+                leading: const Icon(Icons.admin_panel_settings_rounded, color: Colors.black),
+                title: const Text("Super Admin Command Center", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: const Text("Manage Store, Live Orders & Partners", style: TextStyle(color: Colors.black87, fontSize: 11)),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.black),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminPanelScreen())),
+              ),
+            ),
+
           ListTile(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             tileColor: const Color(0xFF1E293B),
