@@ -25,11 +25,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _selectedLang = 'en';
 
-  // 🔐 Admin Verification Check (Matches your email or fallback)
+  // 🔐 Admin Verification Check (Set for mdaziz70025@gmail.com)
   bool get _isAdminUser {
     if (user == null) return false;
     final email = user!.email?.toLowerCase() ?? '';
-    return email == "candygamer540@gmail.com" || email.contains("aziz") || user!.uid.isNotEmpty;
+    return email == "mdaziz70025@gmail.com" || 
+           email == "candygamer540@gmail.com" ||
+           email.contains("aziz");
   }
 
   final Map<String, Map<String, String>> _langStrings = {
@@ -441,7 +443,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 24),
 
-          // 🛍️ 2. Dynamic Store & Deals (Directly managed by Admin)
+          // 🛍️ 2. Dynamic Store & Deals (Managed via Admin)
           Text(t['store_title']!, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
 
@@ -683,7 +685,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // 👑 SECRET ADMIN BUTTON (Visible only when you log in)
+          // 👑 SUPER ADMIN BUTTON (Active for mdaziz70025@gmail.com)
           if (_isAdminUser)
             Container(
               margin: const EdgeInsets.only(bottom: 12),
