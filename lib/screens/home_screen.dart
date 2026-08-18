@@ -23,7 +23,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String _searchQuery = "";
   bool _isLocating = false;
 
-  // 🌐 Multilingual State (en, as, bn)
   String _selectedLang = 'en';
 
   final Map<String, Map<String, String>> _langStrings = {
@@ -33,6 +32,9 @@ class _HomeScreenState extends State<HomeScreen> {
       'account': 'Account',
       'offer': 'Get Flat 20% OFF\nOn Doorstep Services',
       'select_service': 'Select A Service',
+      'top_partners': '⭐ Top Verified Partners in Assam',
+      'store_title': '🛍️ Essential Parts & Marketing Deals',
+      'trust_title': '🛡️ Assam Local Service Guarantee',
       'search': "Search 'Electrician', 'AC', 'Plumber'...",
       'otp_badge': "Completion OTP:",
     },
@@ -42,6 +44,9 @@ class _HomeScreenState extends State<HomeScreen> {
       'account': 'একাউণ্ট',
       'offer': 'ঘৰুৱা সেৱাত পাওক\n২০% ৰেহাই',
       'select_service': 'সেৱা বাছক',
+      'top_partners': '⭐ অসমৰ শীৰ্ষ প্ৰমাণিত অংশীদাৰ',
+      'store_title': '🛍️ প্ৰয়োজনীয় সামগ্ৰী আৰু সামগ্ৰীৰ দোকান',
+      'trust_title': '🛡️ নিশ্চিত আৰু বিশ্বাসযোগ্য সেৱা',
       'search': 'ইলেক্ট্ৰিচিয়ান, প্লাম্বাৰ সন্ধান কৰক...',
       'otp_badge': 'সমাপ্তি অ’টিপি:',
     },
@@ -51,46 +56,48 @@ class _HomeScreenState extends State<HomeScreen> {
       'account': 'অ্যাকাউন্ট',
       'offer': 'হোম সার্ভিসে পান\n২০% ডিসকাউন্ট',
       'select_service': 'সার্ভিস বেছে নিন',
+      'top_partners': '⭐ শীর্ষ ভেরিফাইড পার্টনার্স',
+      'store_title': '🛍️ প্রয়োজনীয় পার্টস ও বিশেষ ডিল',
+      'trust_title': '🛡️ ১০০% বিশ্বস্ত ও নিরাপদ সার্ভিস',
       'search': 'ইলেকট্রিশিয়ান, প্লাম্বার খুঁজুন...',
       'otp_badge': 'সমাপ্তি ওটিপি:',
     }
   };
 
-  final List<String> _popularLocalities = [
-    "Guwahati (Kamrup Metro)",
-    "Dispur, Assam",
-    "Beltola / Six Mile, Guwahati",
-    "Jalukbari / Maligaon, Guwahati",
-    "Silchar (Cachar)",
-    "Dibrugarh Town",
-    "Jorhat Central",
-    "Nagaon Market",
-    "Tezpur (Sonitpur)",
-    "Tinsukia Town",
-    "Bongaigaon City",
-    "Barpeta Town / Road",
-    "Dhubri Town",
-    "Goalpara Town",
-    "Karimganj Town",
-    "Hailakandi Town",
-    "Sivasagar Town",
-    "Golaghat Town",
-    "North Lakhimpur",
-    "Dhemaji Town",
-    "Kokrajhar (BTR)",
-    "Nalbari Town",
-    "Morigaon Town",
-    "Hojai Town",
-    "Diphu (Karbi Anglong)",
-    "Haflong (Dima Hasao)",
-    "Mangaldai (Darrang)",
-    "Udalguri (BTR)",
-    "Chirang / Kajalgaon",
-    "Baksa / Mushalpur",
-    "Biswanath Chariali",
-    "Charaideo / Sonari",
-    "South Salmara",
-    "Majuli River Island",
+  // Sample Featured Products / Marketing Deals
+  final List<Map<String, dynamic>> _featuredProducts = [
+    {
+      "name": "Anchor 6-Module Board",
+      "price": 180,
+      "oldPrice": 250,
+      "tag": "Best Seller",
+      "icon": Icons.electrical_services,
+      "color": Colors.orangeAccent
+    },
+    {
+      "name": "Crompton 1200mm Ceiling Fan",
+      "price": 1399,
+      "oldPrice": 1899,
+      "tag": "25% OFF",
+      "icon": Icons.mode_fan_off_rounded,
+      "color": Colors.cyanAccent
+    },
+    {
+      "name": "Heavy Brass Tap Faucet",
+      "price": 299,
+      "oldPrice": 450,
+      "tag": "Hot Deal",
+      "icon": Icons.water_drop,
+      "color": Colors.blueAccent
+    },
+    {
+      "name": "Asian Paints Waterproof 4L",
+      "price": 850,
+      "oldPrice": 1100,
+      "tag": "Popular",
+      "icon": Icons.format_paint,
+      "color": Colors.pinkAccent
+    },
   ];
 
   @override
@@ -113,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
       cleanNumber = '91$cleanNumber';
     }
     final Uri uri = Uri.parse(
-      "https://wa.me/$cleanNumber?text=Hello%20$partnerName,%20I%20have%20booked%20your%20service%20via%20Assam%20Local%20Service.",
+      "https://wa.me/$cleanNumber?text=Hello%20$partnerName,%20I%20want%20to%20inquire%20about%20your%20service%20via%20Assam%20Local%20Service.",
     );
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -181,59 +188,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLocating = false;
       });
     }
-  }
-
-  void _openLocationBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              "Where do you want your service?",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orangeAccent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                icon: const Icon(Icons.my_location, color: Colors.black),
-                label: const Text(
-                  "Detect Current GPS Location",
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  _fetchLiveLocation();
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _handleSignOut(BuildContext context) async {
@@ -305,41 +259,37 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🌐 Top Bar with Language Selector Toggle
+          // 1. Top Bar: Location & Language
           Row(
             children: [
               Expanded(
-                child: GestureDetector(
-                  onTap: _openLocationBottomSheet,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.location_on, color: Colors.orangeAccent, size: 18),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            _userLocation,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.location_on, color: Colors.orangeAccent, size: 18),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          _userLocation,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-
-              // Language Switch Menu
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
@@ -368,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Search Bar
+          // 2. Search Bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
@@ -388,7 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Banner Card
+          // 3. Special Discount Banner
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),
@@ -412,6 +362,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 20),
 
+          // 4. Service Categories Grid
           Text(
             t['select_service']!,
             style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
@@ -465,6 +416,247 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
+          const SizedBox(height: 24),
+
+          // ================= 5. ⭐ TOP VERIFIED PARTNERS LIST =================
+          Text(
+            t['top_partners']!,
+            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('providers').limit(5).snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.handyman, color: Colors.orangeAccent),
+                      SizedBox(width: 10),
+                      Text("Aziz (Electrician) • Kodalduwa (⭐ 5.0)", style: TextStyle(color: Colors.white70, fontSize: 13)),
+                    ],
+                  ),
+                );
+              }
+
+              final partners = snapshot.data!.docs;
+
+              return SizedBox(
+                height: 140,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: partners.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, idx) {
+                    final p = partners[idx].data() as Map<String, dynamic>;
+                    final pName = p['name'] ?? 'Partner';
+                    final pCat = p['category'] ?? 'Service';
+                    final pLoc = p['location'] ?? 'Assam';
+                    final pPhone = p['phone'] ?? '7002521291';
+                    final double pRating = (p['rating'] ?? 5.0).toDouble();
+
+                    return Container(
+                      width: 220,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.orangeAccent.withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: Colors.orangeAccent.withOpacity(0.2),
+                                child: const Icon(Icons.person, color: Colors.orangeAccent, size: 20),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(pName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
+                                    Text(pCat, style: const TextStyle(color: Colors.orangeAccent, fontSize: 11)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on, color: Colors.white38, size: 12),
+                              const SizedBox(width: 4),
+                              Expanded(child: Text(pLoc, style: const TextStyle(color: Colors.white60, fontSize: 11), overflow: TextOverflow.ellipsis)),
+                              Text("⭐ $pRating", style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 11)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () => _openWhatsApp(pPhone, pName),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                    decoration: BoxDecoration(color: const Color(0xFF25D366), borderRadius: BorderRadius.circular(6)),
+                                    child: const Center(child: Text("WhatsApp", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold))),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () => _makeCall(pPhone),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                    decoration: BoxDecoration(color: Colors.orangeAccent, borderRadius: BorderRadius.circular(6)),
+                                    child: const Center(child: Text("Call", style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold))),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+
+          // ================= 6. 🛍️ MARKETING & SPARE PARTS STORE =================
+          Text(
+            t['store_title']!,
+            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _featuredProducts.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.88,
+            ),
+            itemBuilder: (context, i) {
+              final prod = _featuredProducts[i];
+              return Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(color: Colors.green.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+                          child: Text(prod['tag'], style: const TextStyle(color: Colors.greenAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ),
+                        Icon(prod['icon'], color: prod['color'], size: 24),
+                      ],
+                    ),
+                    const Spacer(),
+                    Text(prod['name'], style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Text("₹${prod['price']}", style: const TextStyle(color: Colors.orangeAccent, fontSize: 15, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 6),
+                        Text("₹${prod['oldPrice']}", style: const TextStyle(color: Colors.white38, fontSize: 11, decoration: TextDecoration.lineThrough)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 28,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orangeAccent,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                          padding: EdgeInsets.zero,
+                        ),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("${prod['name']} added to quick order inquiry!"),
+                              backgroundColor: Colors.green,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                        child: const Text("ORDER PART", style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+
+          // ================= 7. 🛡️ TRUST & HIGHLIGHTS BANNER =================
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(t['trust_title']!, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                const Row(
+                  children: [
+                    Icon(Icons.verified, color: Colors.greenAccent, size: 16),
+                    SizedBox(width: 8),
+                    Text("100% Background Verified Pros in Assam", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Row(
+                  children: [
+                    Icon(Icons.timer, color: Colors.orangeAccent, size: 16),
+                    SizedBox(width: 8),
+                    Text("30-Minute Doorstep Response Time", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Row(
+                  children: [
+                    Icon(Icons.price_check, color: Colors.cyanAccent, size: 16),
+                    SizedBox(width: 8),
+                    Text("Transparent Fixed Rates & Secret OTP Safety", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
         ],
       ),
     );
@@ -542,7 +734,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 8),
 
-                  // 🔐 4-Digit Completion OTP Banner
                   if (!isCompleted)
                     Container(
                       margin: const EdgeInsets.symmetric(vertical: 6),
