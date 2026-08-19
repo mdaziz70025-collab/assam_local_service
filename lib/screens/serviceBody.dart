@@ -8,7 +8,7 @@ class ServiceBody extends StatefulWidget {
   const ServiceBody({Key? key, this.serviceCategory = "Electrician"}) : super(key: key);
 
   @override
-  _ServiceBodyState createState() => _ServiceBodyState();
+  State<ServiceBody> createState() => _ServiceBodyState();
 }
 
 class _ServiceBodyState extends State<ServiceBody> {
@@ -86,6 +86,13 @@ class _ServiceBodyState extends State<ServiceBody> {
     _itemQuantities = {for (var key in selectedCategoryServices.keys) key: 0};
   }
 
+  @override
+  void dispose() {
+    _customerPhoneController.dispose();
+    _customerAddressController.dispose();
+    super.dispose();
+  }
+
   void _incrementItem(String name, int price) {
     setState(() {
       _itemQuantities[name] = (_itemQuantities[name] ?? 0) + 1;
@@ -154,7 +161,7 @@ class _ServiceBodyState extends State<ServiceBody> {
         'scheduledSlot': _selectedSlot,
         'paymentMode': _selectedPayment,
         'completionOtp': completionOtp,
-        'status': 'Pending Partner Acceptance', // ✅ Correct Initial Status
+        'status': 'Pending Partner Acceptance',
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -235,7 +242,6 @@ class _ServiceBodyState extends State<ServiceBody> {
                       ),
                     ),
                     const SizedBox(height: 14),
-
                     TextField(
                       controller: _customerPhoneController,
                       keyboardType: TextInputType.phone,
@@ -252,7 +258,6 @@ class _ServiceBodyState extends State<ServiceBody> {
                       ),
                     ),
                     const SizedBox(height: 10),
-
                     TextField(
                       controller: _customerAddressController,
                       style: const TextStyle(color: Colors.white),
@@ -268,13 +273,11 @@ class _ServiceBodyState extends State<ServiceBody> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     const Text(
                       "Select Date & Time Slot",
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white70),
                     ),
                     const SizedBox(height: 10),
-
                     Row(
                       children: days.map((day) {
                         final isSelected = _selectedDate == day;
@@ -303,7 +306,6 @@ class _ServiceBodyState extends State<ServiceBody> {
                       }).toList(),
                     ),
                     const SizedBox(height: 12),
-
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -325,7 +327,6 @@ class _ServiceBodyState extends State<ServiceBody> {
                       }).toList(),
                     ),
                     const SizedBox(height: 24),
-
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -434,8 +435,7 @@ class _ServiceBodyState extends State<ServiceBody> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         ),
                         onPressed: () => _incrementItem(serviceName, price),
                         child: const Text(
@@ -452,11 +452,9 @@ class _ServiceBodyState extends State<ServiceBody> {
                         child: Row(
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.remove,
-                                  size: 16, color: Colors.black),
+                              icon: const Icon(Icons.remove, size: 16, color: Colors.black),
                               onPressed: () => _decrementItem(serviceName, price),
-                              constraints: const BoxConstraints(
-                                  minWidth: 32, minHeight: 32),
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                               padding: EdgeInsets.zero,
                             ),
                             Text(
@@ -468,21 +466,20 @@ class _ServiceBodyState extends State<ServiceBody> {
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.add,
-                                  size: 16, color: Colors.black),
+                              icon: const Icon(Icons.add, size: 16, color: Colors.black),
                               onPressed: () => _incrementItem(serviceName, price),
-                              constraints: const BoxConstraints(
-                                  minWidth: 32, minHeight: 32),
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                               padding: EdgeInsets.zero,
                             ),
                           ],
                         ),
                       ),
                   ],
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
+        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
@@ -528,9 +525,7 @@ class _ServiceBodyState extends State<ServiceBody> {
                   height: 48,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: hasSelection
-                          ? Colors.orangeAccent
-                          : Colors.white12,
+                      backgroundColor: hasSelection ? Colors.orangeAccent : Colors.white12,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
