@@ -47,7 +47,13 @@ class _ProviderRegistrationScreenState
   }
 
   void _listenForNewIncomingOrders(
-      String category, String partnerName, String partnerPhone) {
+      String category, String partnerName, String partnerPhone, bool isOnline) {
+    if (!isOnline) {
+      _orderStreamSubscription?.cancel();
+      _orderStreamSubscription = null;
+      return;
+    }
+
     if (_orderStreamSubscription != null) return;
 
     _orderStreamSubscription = FirebaseFirestore.instance
@@ -390,11 +396,11 @@ class _ProviderRegistrationScreenState
                 child: Text("Please Login to access Partner Hub",
                     style: TextStyle(color: Colors.white60)),
               )
-            : FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance
+            : StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance
                     .collection('providers')
                     .doc(user.uid)
-                    .get(),
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
@@ -426,15 +432,18 @@ class _ProviderRegistrationScreenState
     final double rating = (data['rating'] ?? 5.0).toDouble();
     final int jobs = data['totalJobs'] ?? 0;
     final int earnings = data['totalEarnings'] ?? 0;
+    final bool isOnline = data['isOnline'] ?? true;
     final String partnerUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-    _listenForNewIncomingOrders(category, name, partnerPhone);
+    // 🚀 Start Realtime Popup Listener based on Online Status
+    _listenForNewIncomingOrders(category, name, partnerPhone, isOnline);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 💼 Online / Offline Header Switch Card
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
@@ -444,7 +453,7 @@ class _ProviderRegistrationScreenState
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.orangeAccent.withOpacity(0.4)),
+              border: Border.all(color: isOnline ? Colors.greenAccent.withOpacity(0.5) : Colors.redAccent.withOpacity(0.3)),
             ),
             child: Column(
               children: [
@@ -452,9 +461,9 @@ class _ProviderRegistrationScreenState
                   children: [
                     CircleAvatar(
                       radius: 30,
-                      backgroundColor: Colors.orangeAccent.withOpacity(0.2),
-                      child: const Icon(Icons.verified_user,
-                          color: Colors.orangeAccent, size: 32),
+                      backgroundColor: isOnline ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+                      child: Icon(isOnline ? Icons.verified_user : Icons.power_settings_new,
+                          color: isOnline ? Colors.greenAccent : Colors.redAccent, size: 32),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -509,10 +518,54 @@ class _ProviderRegistrationScreenState
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 const Divider(color: Colors.white10),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
 
+                // 🔘 Online/Offline Status Switch
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isOnline ? Colors.greenAccent : Colors.redAccent,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          isOnline ? "DUTY STATUS: ONLINE" : "DUTY STATUS: OFFLINE",
+                          style: TextStyle(
+                            color: isOnline ? Colors.greenAccent : Colors.redAccent,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Switch(
+                      value: isOnline,
+                      activeColor: Colors.greenAccent,
+                      inactiveThumbColor: Colors.redAccent,
+                      onChanged: (val) {
+                        final uid = FirebaseAuth.instance.currentUser?.uid;
+                        if (uid != null) {
+                          FirebaseFirestore.instance.collection('providers').doc(uid).update({
+                            'isOnline': val,
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                const Divider(color: Colors.white10),
+                const SizedBox(height: 6),
+
+                // 💰 Realtime Earnings Tracker
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
@@ -541,13 +594,13 @@ class _ProviderRegistrationScreenState
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.15),
+                  color: (isOnline ? Colors.green : Colors.red).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Text(
-                  "● Live Radar",
+                child: Text(
+                  isOnline ? "● Live Radar" : "● Offline",
                   style: TextStyle(
-                    color: Colors.greenAccent,
+                    color: isOnline ? Colors.greenAccent : Colors.redAccent,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -557,302 +610,337 @@ class _ProviderRegistrationScreenState
           ),
           const SizedBox(height: 12),
 
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('bookings')
-                .where('category', isEqualTo: category)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(20.0),
-                    child: CircularProgressIndicator(color: Colors.orangeAccent),
+          if (!isOnline)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Column(
+                children: [
+                  Icon(Icons.bedtime_outlined, color: Colors.redAccent, size: 36),
+                  SizedBox(height: 8),
+                  Text(
+                    "You are currently Offline",
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
-                );
-              }
-
-              final allDocs = snapshot.data?.docs ?? [];
-              final docs = allDocs.where((doc) {
-                final d = doc.data() as Map<String, dynamic>;
-                final status = d['status'] ?? '';
-                final assignedPartnerId = d['assignedPartnerId'] ?? '';
-
-                if (status == "Rejected by Partner" ||
-                    status == "Service Completed") {
-                  return false;
+                  SizedBox(height: 4),
+                  Text(
+                    "Switch toggle to Online above to receive new customer bookings.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white38, fontSize: 12),
+                  ),
+                ],
+              ),
+            )
+          else
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('bookings')
+                  .where('category', isEqualTo: category)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: CircularProgressIndicator(color: Colors.orangeAccent),
+                    ),
+                  );
                 }
 
-                if (status.contains("Accepted")) {
-                  return assignedPartnerId == partnerUid;
-                }
+                final allDocs = snapshot.data?.docs ?? [];
+                final docs = allDocs.where((doc) {
+                  final d = doc.data() as Map<String, dynamic>;
+                  final status = d['status'] ?? '';
+                  final assignedPartnerId = d['assignedPartnerId'] ?? '';
 
-                return true;
-              }).toList();
+                  if (status == "Rejected by Partner" ||
+                      status == "Service Completed" ||
+                      status == "Cancelled by Customer") {
+                    return false;
+                  }
 
-              if (docs.isEmpty) {
-                return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Column(
-                    children: [
-                      Icon(Icons.radar, color: Colors.orangeAccent, size: 36),
-                      SizedBox(height: 8),
-                      Text(
-                        "No new orders right now",
-                        style: TextStyle(
-                            color: Colors.white70, fontWeight: FontWeight.w600),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        "New incoming requests in your area will appear here.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white38, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                );
-              }
+                  if (status.contains("Accepted")) {
+                    return assignedPartnerId == partnerUid;
+                  }
 
-              return ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: docs.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final doc = docs[index];
-                  final orderData = doc.data() as Map<String, dynamic>;
-                  final String orderId = doc.id;
-                  final String customerName =
-                      orderData['customerName'] ?? 'Customer';
-                  final String custPhone =
-                      orderData['customerPhone'] ?? '7002521291';
-                  final String address =
-                      orderData['customerAddress'] ?? 'Assam Local';
-                  final int amount = orderData['totalAmount'] ?? 0;
-                  final String scheduledDate =
-                      orderData['scheduledDate'] ?? 'Today';
-                  final String slot = orderData['scheduledSlot'] ?? '';
-                  final String currentStatus =
-                      orderData['status'] ?? 'Pending Partner Acceptance';
-                  final String completionOtp =
-                      orderData['completionOtp'] ?? '1234';
-                  final bool isAccepted = currentStatus.contains("Accepted");
+                  return true;
+                }).toList();
 
+                if (docs.isEmpty) {
                   return Container(
-                    padding: const EdgeInsets.all(16),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1E293B),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isAccepted
-                            ? Colors.green.withOpacity(0.5)
-                            : Colors.orangeAccent.withOpacity(0.3),
-                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: const Column(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              customerName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              "₹ $amount",
-                              style: const TextStyle(
-                                color: Colors.orangeAccent,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                        Icon(Icons.radar, color: Colors.orangeAccent, size: 36),
+                        SizedBox(height: 8),
+                        Text(
+                          "No new orders right now",
+                          style: TextStyle(
+                              color: Colors.white70, fontWeight: FontWeight.w600),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.access_time,
-                                size: 14, color: Colors.white60),
-                            const SizedBox(width: 6),
-                            Text(
-                              "$scheduledDate ($slot)",
-                              style: const TextStyle(
-                                  color: Colors.white70, fontSize: 12),
-                            ),
-                          ],
+                        SizedBox(height: 4),
+                        Text(
+                          "New incoming requests in your area will appear here.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white38, fontSize: 12),
                         ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.home_outlined,
-                                size: 14, color: Colors.white60),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                address,
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 12),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        const Divider(color: Colors.white10),
-                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  );
+                }
 
-                        if (isAccepted)
-                          Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            const Color(0xFF25D366),
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10)),
-                                      ),
-                                      icon: const Icon(Icons.chat,
-                                          color: Colors.white, size: 16),
-                                      label: const Text("WhatsApp",
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold)),
-                                      onPressed: () => _openWhatsApp(
-                                          custPhone, customerName),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.blueAccent,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      ),
-                                      icon: const Icon(Icons.message, color: Colors.white, size: 16),
-                                      label: const Text("In-App Chat", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => ChatScreen(
-                                              orderId: orderId,
-                                              receiverName: customerName,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  IconButton(
-                                    style: IconButton.styleFrom(backgroundColor: Colors.orangeAccent),
-                                    icon: const Icon(Icons.call, color: Colors.black, size: 18),
-                                    onPressed: () => _makeCall(custPhone),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
+                return ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: docs.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final doc = docs[index];
+                    final orderData = doc.data() as Map<String, dynamic>;
+                    final String orderId = doc.id;
+                    final String customerName =
+                        orderData['customerName'] ?? 'Customer';
+                    final String custPhone =
+                        orderData['customerPhone'] ?? '7002521291';
+                    final String address =
+                        orderData['customerAddress'] ?? 'Assam Local';
+                    final int amount = orderData['totalAmount'] ?? 0;
+                    final String scheduledDate =
+                        orderData['scheduledDate'] ?? 'Today';
+                    final String slot = orderData['scheduledSlot'] ?? '';
+                    final String currentStatus =
+                        orderData['status'] ?? 'Pending Partner Acceptance';
+                    final String completionOtp =
+                        orderData['completionOtp'] ?? '1234';
+                    final bool isAccepted = currentStatus.contains("Accepted");
 
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton(
-                                  style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(
-                                        color: Colors.greenAccent),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10)),
-                                  ),
-                                  onPressed: () => _showOtpVerificationDialog(
-                                    orderId,
-                                    completionOtp,
-                                    amount,
-                                    name,
-                                    partnerPhone,
-                                  ),
-                                  child: const Text(
-                                    "✔ ENTER CUSTOMER OTP & FINISH JOB",
-                                    style: TextStyle(
-                                        color: Colors.greenAccent,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
-                        else
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isAccepted
+                              ? Colors.green.withOpacity(0.5)
+                              : Colors.orangeAccent.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(
-                                        color: Colors.redAccent),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  onPressed: () => _updateOrderStatus(
-                                      orderId,
-                                      "Rejected by Partner",
-                                      name,
-                                      partnerPhone),
-                                  child: const Text(
-                                    "REJECT",
-                                    style: TextStyle(
-                                      color: Colors.redAccent,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                              Text(
+                                customerName,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  onPressed: () => _updateOrderStatus(
-                                      orderId,
-                                      "Accepted - Partner on the Way",
-                                      name,
-                                      partnerPhone),
-                                  child: const Text(
-                                    "ACCEPT",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                              Text(
+                                "₹ $amount",
+                                style: const TextStyle(
+                                  color: Colors.orangeAccent,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ],
                           ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.access_time,
+                                  size: 14, color: Colors.white60),
+                              const SizedBox(width: 6),
+                              Text(
+                                "$scheduledDate ($slot)",
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.home_outlined,
+                                  size: 14, color: Colors.white60),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  address,
+                                  style: const TextStyle(
+                                      color: Colors.white70, fontSize: 12),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          const Divider(color: Colors.white10),
+                          const SizedBox(height: 8),
+
+                          if (isAccepted)
+                            Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              const Color(0xFF25D366),
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10)),
+                                        ),
+                                        icon: const Icon(Icons.chat,
+                                            color: Colors.white, size: 16),
+                                        label: const Text("WhatsApp",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold)),
+                                        onPressed: () => _openWhatsApp(
+                                            custPhone, customerName),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.blueAccent,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10)),
+                                        ),
+                                        icon: const Icon(Icons.message,
+                                            color: Colors.white, size: 16),
+                                        label: const Text("In-App Chat",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold)),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => ChatScreen(
+                                                orderId: orderId,
+                                                receiverName: customerName,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      style: IconButton.styleFrom(
+                                          backgroundColor: Colors.orangeAccent),
+                                      icon: const Icon(Icons.call,
+                                          color: Colors.black, size: 18),
+                                      onPressed: () => _makeCall(custPhone),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton(
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(
+                                          color: Colors.greenAccent),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                    ),
+                                    onPressed: () => _showOtpVerificationDialog(
+                                      orderId,
+                                      completionOtp,
+                                      amount,
+                                      name,
+                                      partnerPhone,
+                                    ),
+                                    child: const Text(
+                                      "✔ ENTER CUSTOMER OTP & FINISH JOB",
+                                      style: TextStyle(
+                                          color: Colors.greenAccent,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          else
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(
+                                          color: Colors.redAccent),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    onPressed: () => _updateOrderStatus(
+                                        orderId,
+                                        "Rejected by Partner",
+                                        name,
+                                        partnerPhone),
+                                    child: const Text(
+                                      "REJECT",
+                                      style: TextStyle(
+                                        color: Colors.redAccent,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    onPressed: () => _updateOrderStatus(
+                                        orderId,
+                                        "Accepted - Partner on the Way",
+                                        name,
+                                        partnerPhone),
+                                    child: const Text(
+                                      "ACCEPT",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           const SizedBox(height: 20),
         ],
       ),
