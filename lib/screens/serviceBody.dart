@@ -137,7 +137,6 @@ class _ServiceBodyState extends State<ServiceBody> {
         }
       });
 
-      // 4-digit secret OTP
       final String completionOtp = (1000 + Random().nextInt(9000)).toString();
 
       await FirebaseFirestore.instance.collection('bookings').add({
@@ -155,7 +154,7 @@ class _ServiceBodyState extends State<ServiceBody> {
         'scheduledSlot': _selectedSlot,
         'paymentMode': _selectedPayment,
         'completionOtp': completionOtp,
-        'status': 'Partner Assigned',
+        'status': 'Pending Partner Acceptance', // ✅ Correct Initial Status
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -259,7 +258,7 @@ class _ServiceBodyState extends State<ServiceBody> {
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         labelText: "House No / Gaon / Landmark",
-                        hintText: "e.g. Near Daily Bazar, Kodalduwa",
+                        hintText: "e.g. Near Daily Bazar, Goalpara",
                         hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
                         labelStyle: const TextStyle(color: Colors.white70, fontSize: 13),
                         prefixIcon: const Icon(Icons.home, color: Colors.orangeAccent, size: 20),
@@ -480,11 +479,10 @@ class _ServiceBodyState extends State<ServiceBody> {
                         ),
                       ),
                   ],
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
