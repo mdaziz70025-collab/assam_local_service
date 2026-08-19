@@ -25,13 +25,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _selectedLang = 'en';
 
-  // 🔐 Admin Verification Check (Set for mdaziz70025@gmail.com)
+  // 🔐 Strict Admin Check (Exact Match Only)
   bool get _isAdminUser {
     if (user == null) return false;
     final email = user!.email?.toLowerCase() ?? '';
-    return email == "mdaziz70025@gmail.com" || 
-           email == "candygamer540@gmail.com" ||
-           email.contains("aziz");
+    return email == "mdaziz70025@gmail.com";
   }
 
   final Map<String, Map<String, String>> _langStrings = {
@@ -77,6 +75,81 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _fetchLiveLocation();
+  }
+
+  // ⭐ Customer Review & Rating Dialog
+  void _showRatingDialog(String bookingId, String partnerId, String partnerName) {
+    int rating = 5;
+    final reviewController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text("Rate $partnerName", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("How was your service experience?", style: TextStyle(color: Colors.white70, fontSize: 13)),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return IconButton(
+                    icon: Icon(
+                      index < rating ? Icons.star_rounded : Icons.star_border_rounded,
+                      color: Colors.amber,
+                      size: 32,
+                    ),
+                    onPressed: () => setDialogState(() => rating = index + 1),
+                  );
+                }),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: reviewController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: "Write a short review (optional)...",
+                  hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+                  filled: true,
+                  fillColor: const Color(0xFF0F172A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Skip", style: TextStyle(color: Colors.white38)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent),
+              onPressed: () async {
+                await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
+                  'customerRating': rating,
+                  'customerReview': reviewController.text.trim(),
+                  'isReviewed': true,
+                });
+                if (partnerId.isNotEmpty) {
+                  await FirebaseFirestore.instance.collection('providers').doc(partnerId).update({
+                    'rating': rating.toDouble(),
+                  });
+                }
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Thank you for your review! ⭐"), backgroundColor: Colors.green),
+                );
+              },
+              child: const Text("SUBMIT", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _makeCall(String phoneNumber) async {
@@ -329,7 +402,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 24),
 
-          // ⭐ 1. Top Verified Partners List
           Text(t['top_partners']!, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
 
@@ -443,7 +515,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 24),
 
-          // 🛍️ 2. Dynamic Store & Deals (Managed via Admin)
           Text(t['store_title']!, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
 
@@ -553,16 +624,19 @@ class _HomeScreenState extends State<HomeScreen> {
           itemCount: docs.length,
           itemBuilder: (context, i) {
             final data = docs[i].data() as Map<String, dynamic>;
+            final bookingId = docs[i].id;
             final category = data['category'] ?? "Service";
             final totalAmount = data['totalAmount'] ?? 0;
             final date = data['scheduledDate'] ?? "Today";
             final slot = data['scheduledSlot'] ?? "";
-            final status = data['status'] ?? "Partner Assigned";
+            final status = data['status'] ?? "Pending Partner Acceptance";
             final partnerName = data['assignedPartnerName'] ?? "Aziz";
             final partnerPhone = data['partnerPhone'] ?? "7002521291";
+            final partnerId = data['assignedPartnerId'] ?? "";
             final completionOtp = data['completionOtp'] ?? "1234";
             final bool isAccepted = status.contains("Accepted");
             final bool isCompleted = status.contains("Completed");
+            final bool isReviewed = data['isReviewed'] ?? false;
 
             return Container(
               margin: const EdgeInsets.only(bottom: 14),
@@ -614,6 +688,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text("₹ $totalAmount", style: const TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold, fontSize: 16)),
                     ],
                   ),
+
+                  // ⭐ Review Button when Job is Completed
+                  if (isCompleted && !isReviewed) ...[
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
+                        icon: const Icon(Icons.star, color: Colors.black, size: 16),
+                        label: const Text("Rate & Review Partner", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
+                        onPressed: () => _showRatingDialog(bookingId, partnerId, partnerName),
+                      ),
+                    ),
+                  ],
 
                   if (isAccepted) ...[
                     const SizedBox(height: 10),
@@ -685,7 +773,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // 👑 SUPER ADMIN BUTTON (Active for mdaziz70025@gmail.com)
           if (_isAdminUser)
             Container(
               margin: const EdgeInsets.only(bottom: 12),
