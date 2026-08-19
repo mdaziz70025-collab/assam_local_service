@@ -43,11 +43,16 @@ class _ProviderRegistrationScreenState
   @override
   void dispose() {
     _orderStreamSubscription?.cancel();
+    _nameController.dispose();
+    _phoneController.dispose();
+    _experienceController.dispose();
+    _rateController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 
   void _listenForNewIncomingOrders(
-      String category, String partnerName, String partnerPhone, bool isOnline) {
+      String category, String partnerName, String partnerPhone, String partnerLocation, bool isOnline) {
     if (!isOnline) {
       _orderStreamSubscription?.cancel();
       _orderStreamSubscription = null;
@@ -55,6 +60,8 @@ class _ProviderRegistrationScreenState
     }
 
     if (_orderStreamSubscription != null) return;
+
+    final String partnerCity = partnerLocation.toLowerCase().trim();
 
     _orderStreamSubscription = FirebaseFirestore.instance
         .collection('bookings')
@@ -66,13 +73,20 @@ class _ProviderRegistrationScreenState
           final data = change.doc.data() as Map<String, dynamic>;
           final orderId = change.doc.id;
           final status = data['status'] ?? '';
+          final custAddress = (data['customerAddress'] ?? '').toString().toLowerCase();
+
+          // 📍 Location Filtering for Alert Popups
+          bool matchesLocation = custAddress.contains(partnerCity) ||
+              partnerCity.contains("assam") ||
+              partnerCity.isEmpty;
 
           if (status == 'Pending Partner Acceptance' &&
+              matchesLocation &&
               !_shownOrderPopupIds.contains(orderId)) {
             _shownOrderPopupIds.add(orderId);
 
             NotificationService.showInstantNotification(
-              "🔔 New $category Order Received!",
+              "🔔 New $category Order in $partnerLocation!",
               "${data['customerName']} booked an order of ₹${data['totalAmount']}",
             );
 
@@ -435,8 +449,8 @@ class _ProviderRegistrationScreenState
     final bool isOnline = data['isOnline'] ?? true;
     final String partnerUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-    // 🚀 Start Realtime Popup Listener based on Online Status
-    _listenForNewIncomingOrders(category, name, partnerPhone, isOnline);
+    // 🚀 Start Realtime Popup Listener based on Online & Location Status
+    _listenForNewIncomingOrders(category, name, partnerPhone, location, isOnline);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -652,10 +666,13 @@ class _ProviderRegistrationScreenState
                 }
 
                 final allDocs = snapshot.data?.docs ?? [];
+                final partnerCity = location.toLowerCase().trim();
+
                 final docs = allDocs.where((doc) {
                   final d = doc.data() as Map<String, dynamic>;
                   final status = d['status'] ?? '';
                   final assignedPartnerId = d['assignedPartnerId'] ?? '';
+                  final custAddress = (d['customerAddress'] ?? '').toString().toLowerCase();
 
                   if (status == "Rejected by Partner" ||
                       status == "Service Completed" ||
@@ -667,7 +684,12 @@ class _ProviderRegistrationScreenState
                     return assignedPartnerId == partnerUid;
                   }
 
-                  return true;
+                  // 📍 Match order within partner's Assam district or city
+                  bool matchesLocation = custAddress.contains(partnerCity) ||
+                      partnerCity.contains("assam") ||
+                      partnerCity.isEmpty;
+
+                  return matchesLocation;
                 }).toList();
 
                 if (docs.isEmpty) {
@@ -678,18 +700,18 @@ class _ProviderRegistrationScreenState
                       color: const Color(0xFF1E293B),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Column(
+                    child: Column(
                       children: [
-                        Icon(Icons.radar, color: Colors.orangeAccent, size: 36),
-                        SizedBox(height: 8),
+                        const Icon(Icons.radar, color: Colors.orangeAccent, size: 36),
+                        const SizedBox(height: 8),
                         Text(
-                          "No new orders right now",
-                          style: TextStyle(
+                          "No active orders in $location right now",
+                          style: const TextStyle(
                               color: Colors.white70, fontWeight: FontWeight.w600),
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          "New incoming requests in your area will appear here.",
+                        const SizedBox(height: 4),
+                        const Text(
+                          "New incoming requests in your nearby area will appear here.",
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.white38, fontSize: 12),
                         ),
@@ -1098,8 +1120,8 @@ class _ProviderRegistrationScreenState
             const SizedBox(height: 14),
             _buildTextField(
               controller: _locationController,
-              label: "Service Area in Assam",
-              hint: "e.g. Beltola, Guwahati",
+              label: "Service Area / District in Assam",
+              hint: "e.g. Goalpara, Beltola, Silchar",
               icon: Icons.location_on_outlined,
             ),
             const SizedBox(height: 30),
