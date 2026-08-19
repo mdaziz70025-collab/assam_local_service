@@ -40,7 +40,6 @@ class NotificationService {
     }
   }
 
-  // 🔔 Method for showing instant banner alerts on device
   static Future<void> showInstantNotification(String title, String body) async {
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'assam_local_channel',
@@ -67,14 +66,19 @@ class NotificationService {
     if (user != null) {
       String? token = await _firebaseMessaging.getToken();
       if (token != null) {
+        // Save to users collection
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'fcmToken': token,
           'lastActive': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
 
-        await FirebaseFirestore.instance.collection('providers').doc(user.uid).set({
-          'fcmToken': token,
-        }, SetOptions(merge: true));
+        // ✅ Only update providers collection if user is an actual registered provider
+        final providerDoc = await FirebaseFirestore.instance.collection('providers').doc(user.uid).get();
+        if (providerDoc.exists) {
+          await FirebaseFirestore.instance.collection('providers').doc(user.uid).set({
+            'fcmToken': token,
+          }, SetOptions(merge: true));
+        }
       }
     }
   }
