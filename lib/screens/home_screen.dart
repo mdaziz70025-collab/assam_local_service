@@ -25,7 +25,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _selectedLang = 'en';
 
-  // 🔐 Strict Admin Check (Exact Match Only)
   bool get _isAdminUser {
     if (user == null) return false;
     final email = user!.email?.toLowerCase() ?? '';
@@ -77,7 +76,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchLiveLocation();
   }
 
-  // ⭐ Customer Review & Rating Dialog
   void _showRatingDialog(String bookingId, String partnerId, String partnerName) {
     int rating = 5;
     final reviewController = TextEditingController();
@@ -150,6 +148,119 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  // 🔄 Reschedule Booking Modal
+  void _openRescheduleDialog(String bookingId) {
+    String newDate = "Tomorrow";
+    String newSlot = "11:00 AM - 01:00 PM";
+    final days = ["Tomorrow", "Day After", "Today"];
+    final slots = [
+      "09:00 AM - 11:00 AM",
+      "11:00 AM - 01:00 PM",
+      "02:00 PM - 04:00 PM",
+      "04:00 PM - 06:00 PM",
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Reschedule Service Booking", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 14),
+              Row(
+                children: days.map((d) {
+                  final isSel = newDate == d;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setSheetState(() => newDate = d),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 6),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSel ? Colors.orangeAccent : const Color(0xFF0F172A),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(d, textAlign: TextAlign.center, style: TextStyle(color: isSel ? Colors.black : Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: slots.map((s) {
+                  final isSel = newSlot == s;
+                  return ChoiceChip(
+                    label: Text(s, style: TextStyle(color: isSel ? Colors.black : Colors.white, fontSize: 11)),
+                    selected: isSel,
+                    selectedColor: Colors.orangeAccent,
+                    backgroundColor: const Color(0xFF0F172A),
+                    onSelected: (val) => setSheetState(() => newSlot = s),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent),
+                  onPressed: () async {
+                    await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
+                      'scheduledDate': newDate,
+                      'scheduledSlot': newSlot,
+                    });
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Booking rescheduled to $newDate ($newSlot) ✅"), backgroundColor: Colors.green),
+                    );
+                  },
+                  child: const Text("CONFIRM RESCHEDULE", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ❌ Cancel Booking Confirmation
+  Future<void> _cancelBooking(String bookingId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text("Cancel Booking?", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: const Text("Are you sure you want to cancel this booking request?", style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("No", style: TextStyle(color: Colors.white38))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("Yes, Cancel", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
+        'status': 'Cancelled by Customer',
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Booking has been cancelled."), backgroundColor: Colors.redAccent),
+      );
+    }
   }
 
   Future<void> _makeCall(String phoneNumber) async {
@@ -636,6 +747,7 @@ class _HomeScreenState extends State<HomeScreen> {
             final completionOtp = data['completionOtp'] ?? "1234";
             final bool isAccepted = status.contains("Accepted");
             final bool isCompleted = status.contains("Completed");
+            final bool isCancelled = status.contains("Cancelled");
             final bool isReviewed = data['isReviewed'] ?? false;
 
             return Container(
@@ -644,7 +756,11 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFF1E293B),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isAccepted ? Colors.green.withOpacity(0.5) : Colors.orangeAccent.withOpacity(0.3)),
+                border: Border.all(
+                  color: isCancelled
+                      ? Colors.redAccent.withOpacity(0.4)
+                      : (isAccepted ? Colors.green.withOpacity(0.5) : Colors.orangeAccent.withOpacity(0.3)),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -656,16 +772,25 @@ class _HomeScreenState extends State<HomeScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isAccepted ? Colors.green.withOpacity(0.2) : Colors.orangeAccent.withOpacity(0.15),
+                          color: isCancelled
+                              ? Colors.red.withOpacity(0.2)
+                              : (isAccepted ? Colors.green.withOpacity(0.2) : Colors.orangeAccent.withOpacity(0.15)),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text(status, style: TextStyle(color: isAccepted ? Colors.greenAccent : Colors.orangeAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          status,
+                          style: TextStyle(
+                            color: isCancelled ? Colors.redAccent : (isAccepted ? Colors.greenAccent : Colors.orangeAccent),
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
 
-                  if (!isCompleted)
+                  if (!isCompleted && !isCancelled)
                     Container(
                       margin: const EdgeInsets.symmetric(vertical: 6),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -689,7 +814,38 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
 
-                  // ⭐ Review Button when Job is Completed
+                  // 🔄 Cancel & Reschedule Action Buttons
+                  if (!isCompleted && !isCancelled) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.white24),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                            ),
+                            onPressed: () => _openRescheduleDialog(bookingId),
+                            child: const Text("Reschedule", style: TextStyle(color: Colors.white70, fontSize: 11)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.redAccent),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                            ),
+                            onPressed: () => _cancelBooking(bookingId),
+                            child: const Text("Cancel Booking", style: TextStyle(color: Colors.redAccent, fontSize: 11)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+
                   if (isCompleted && !isReviewed) ...[
                     const SizedBox(height: 10),
                     SizedBox(
@@ -703,7 +859,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
 
-                  if (isAccepted) ...[
+                  if (isAccepted && !isCancelled) ...[
                     const SizedBox(height: 10),
                     const Divider(color: Colors.white10),
                     const SizedBox(height: 6),
