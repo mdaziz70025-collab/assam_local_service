@@ -61,7 +61,7 @@ class _ProviderRegistrationScreenState
           final orderId = change.doc.id;
           final status = data['status'] ?? '';
 
-          if (status == 'Partner Assigned' &&
+          if (status == 'Pending Partner Acceptance' &&
               !_shownOrderPopupIds.contains(orderId)) {
             _shownOrderPopupIds.add(orderId);
 
@@ -179,7 +179,6 @@ class _ProviderRegistrationScreenState
     );
   }
 
-  // 🔐 Verify OTP Dialog before completing job
   void _showOtpVerificationDialog(String orderId, String correctOtp, int orderAmount, String partnerName, String partnerPhone) {
     final otpController = TextEditingController();
 
@@ -268,165 +267,6 @@ class _ProviderRegistrationScreenState
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
-  }
-
-  void _openEditProfileSheet(Map<String, dynamic> data) {
-    final editName = TextEditingController(text: data['name'] ?? '');
-    final editPhone = TextEditingController(text: data['phone'] ?? '');
-    final editExp = TextEditingController(text: data['experience'] ?? '');
-    final editRate = TextEditingController(text: (data['baseRate'] ?? 299).toString());
-    final editLoc = TextEditingController(text: data['location'] ?? '');
-    String editCat = data['category'] ?? 'Electrician';
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
-          padding: EdgeInsets.only(
-            top: 20,
-            left: 20,
-            right: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "Edit Partner Profile",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                _buildTextField(
-                  controller: editName,
-                  label: "Full Name",
-                  hint: "Name",
-                  icon: Icons.person_outline,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  controller: editPhone,
-                  label: "Mobile Number",
-                  hint: "70025XXXXX",
-                  icon: Icons.phone_android,
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: editCat,
-                      dropdownColor: const Color(0xFF1E293B),
-                      isExpanded: true,
-                      icon: const Icon(Icons.keyboard_arrow_down,
-                          color: Colors.orangeAccent),
-                      style: const TextStyle(color: Colors.white, fontSize: 15),
-                      items: _categories.map((String cat) {
-                        return DropdownMenuItem<String>(
-                          value: cat,
-                          child: Text(cat),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) setModalState(() => editCat = val);
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  controller: editExp,
-                  label: "Experience",
-                  hint: "e.g. 5 years",
-                  icon: Icons.work_outline,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  controller: editRate,
-                  label: "Base Rate (₹)",
-                  hint: "e.g. 150",
-                  icon: Icons.currency_rupee,
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  controller: editLoc,
-                  label: "Location / Gaon",
-                  hint: "e.g. Kodalduwa",
-                  icon: Icons.location_on_outlined,
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orangeAccent,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: () async {
-                      final uid = FirebaseAuth.instance.currentUser?.uid;
-                      if (uid != null) {
-                        await FirebaseFirestore.instance
-                            .collection('providers')
-                            .doc(uid)
-                            .update({
-                          'name': editName.text.trim(),
-                          'phone': editPhone.text.trim(),
-                          'category': editCat,
-                          'experience': editExp.text.trim(),
-                          'baseRate': int.tryParse(editRate.text.trim()) ?? 150,
-                          'location': editLoc.text.trim(),
-                        });
-                        Navigator.pop(ctx);
-                        setState(() {});
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Profile updated successfully! ✅"),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      }
-                    },
-                    child: const Text(
-                      "SAVE CHANGES",
-                      style: TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _submitPartnerToFirestore() async {
@@ -595,7 +435,6 @@ class _ProviderRegistrationScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 💼 Wallet & Partner Profile Header
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
@@ -668,25 +507,12 @@ class _ProviderRegistrationScreenState
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.white10,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.edit,
-                            color: Colors.orangeAccent, size: 18),
-                      ),
-                      onPressed: () => _openEditProfileSheet(data),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 const Divider(color: Colors.white10),
                 const SizedBox(height: 8),
 
-                // 💰 Realtime Earnings Tracker
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
@@ -812,7 +638,7 @@ class _ProviderRegistrationScreenState
                       orderData['scheduledDate'] ?? 'Today';
                   final String slot = orderData['scheduledSlot'] ?? '';
                   final String currentStatus =
-                      orderData['status'] ?? 'Partner Assigned';
+                      orderData['status'] ?? 'Pending Partner Acceptance';
                   final String completionOtp =
                       orderData['completionOtp'] ?? '1234';
                   final bool isAccepted = currentStatus.contains("Accepted");
@@ -893,15 +719,23 @@ class _ProviderRegistrationScreenState
                                   Expanded(
                                     child: ElevatedButton.icon(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF25D366),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        backgroundColor:
+                                            const Color(0xFF25D366),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10)),
                                       ),
-                                      icon: const Icon(Icons.chat, color: Colors.white, size: 16),
-                                      label: const Text("WhatsApp", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                                      onPressed: () => _openWhatsApp(custPhone, customerName),
+                                      icon: const Icon(Icons.chat,
+                                          color: Colors.white, size: 16),
+                                      label: const Text("WhatsApp",
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold)),
+                                      onPressed: () => _openWhatsApp(
+                                          custPhone, customerName),
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 8),
                                   Expanded(
                                     child: ElevatedButton.icon(
                                       style: ElevatedButton.styleFrom(
@@ -933,13 +767,15 @@ class _ProviderRegistrationScreenState
                               ),
                               const SizedBox(height: 8),
 
-                              // 🔐 OTP Verification Finish Button
                               SizedBox(
                                 width: double.infinity,
                                 child: OutlinedButton(
                                   style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Colors.greenAccent),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    side: const BorderSide(
+                                        color: Colors.greenAccent),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
                                   ),
                                   onPressed: () => _showOtpVerificationDialog(
                                     orderId,
@@ -950,7 +786,10 @@ class _ProviderRegistrationScreenState
                                   ),
                                   child: const Text(
                                     "✔ ENTER CUSTOMER OTP & FINISH JOB",
-                                    style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 12),
+                                    style: TextStyle(
+                                        color: Colors.greenAccent,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12),
                                   ),
                                 ),
                               ),
