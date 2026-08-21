@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'service_body.dart';
 
 class CategoryScreen extends StatefulWidget {
-  const CategoryScreen({Key? key}) : super(key: key);
+  final String? categoryName;
+
+  const CategoryScreen({Key? key, this.categoryName}) : super(key: key);
 
   @override
   _CategoryScreenState createState() => _CategoryScreenState();
 }
 
 class _CategoryScreenState extends State<CategoryScreen> {
-  int _selectedIndex = 0;
   String _searchQuery = "";
 
   final List<Map<String, dynamic>> allCategories = const [
@@ -22,18 +24,25 @@ class _CategoryScreenState extends State<CategoryScreen> {
     {"name": "AC Repair", "icon": Icons.handyman, "color": Colors.teal},
   ];
 
-  void _onItemTapped(int index) {
-    if (index == 1) {
-      Navigator.pushNamed(context, '/home');
-    } else if (index == 2) {
-      Navigator.pushNamed(context, '/profile');
-    } else {
-      setState(() => _selectedIndex = index);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Agar direct kisi specific category ke liye open kiya gaya ho, toh seedha ServiceBody render karein
+    if (widget.categoryName != null && widget.categoryName!.isNotEmpty) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF0F172A),
+        appBar: AppBar(
+          title: Text(
+            "${widget.categoryName} Services",
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18),
+          ),
+          backgroundColor: const Color(0xFF1E293B),
+          elevation: 0,
+          foregroundColor: Colors.white,
+        ),
+        body: ServiceBody(categoryName: widget.categoryName!),
+      );
+    }
+
     final filteredCategories = allCategories
         .where((cat) => (cat["name"] as String)
             .toLowerCase()
@@ -45,18 +54,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
       appBar: AppBar(
         title: const Text(
           "Local Services Assam",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18),
         ),
         backgroundColor: const Color(0xFF1E293B),
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.account_circle, size: 28, color: Colors.orangeAccent),
-            tooltip: "Profile",
-            onPressed: () => Navigator.pushNamed(context, '/profile'),
-          ),
-          const SizedBox(width: 8),
-        ],
+        foregroundColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -83,7 +85,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
             const Text(
               "What service do you need today?",
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const SizedBox(height: 14),
 
@@ -92,7 +94,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   ? const Center(
                       child: Text(
                         "No services found",
-                        style: TextStyle(color: Colors.white54, fontSize: 15),
+                        style: TextStyle(color: Colors.white54, fontSize: 14),
                       ),
                     )
                   : GridView.builder(
@@ -107,10 +109,22 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         var item = filteredCategories[index];
                         return InkWell(
                           onTap: () {
-                            Navigator.pushNamed(
+                            Navigator.push(
                               context,
-                              '/appointmentScreen',
-                              arguments: item["name"],
+                              MaterialPageRoute(
+                                builder: (context) => Scaffold(
+                                  backgroundColor: const Color(0xFF0F172A),
+                                  appBar: AppBar(
+                                    title: Text(
+                                      "${item['name']} Services",
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                    ),
+                                    backgroundColor: const Color(0xFF1E293B),
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  body: ServiceBody(categoryName: item["name"]),
+                                ),
+                              ),
                             );
                           },
                           child: Card(
@@ -136,7 +150,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                 Text(
                                   item["name"] as String,
                                   style: const TextStyle(
-                                    fontSize: 15,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
@@ -151,28 +165,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        backgroundColor: const Color(0xFF1E293B),
-        selectedItemColor: Colors.orangeAccent,
-        unselectedItemColor: Colors.white54,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment),
-            label: 'Bookings',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
       ),
     );
   }
