@@ -26,7 +26,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Agar direct kisi specific category ke liye open kiya gaya ho, toh seedha ServiceBody render karein
+    // Agar direct specific category open ho rahi hai
     if (widget.categoryName != null && widget.categoryName!.isNotEmpty) {
       return Scaffold(
         backgroundColor: const Color(0xFF0F172A),
@@ -39,7 +39,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           elevation: 0,
           foregroundColor: Colors.white,
         ),
-        body: ServiceBody(categoryName: widget.categoryName!),
+        body: ServiceBody(serviceCategory: widget.categoryName!),
       );
     }
 
@@ -122,7 +122,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                     backgroundColor: const Color(0xFF1E293B),
                                     foregroundColor: Colors.white,
                                   ),
-                                  body: ServiceBody(categoryName: item["name"]),
+                                  body: ServiceBody(serviceCategory: item["name"] as String),
                                 ),
                               ),
                             );
