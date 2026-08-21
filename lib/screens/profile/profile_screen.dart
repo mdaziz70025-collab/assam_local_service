@@ -62,7 +62,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildLanguageOption(String lang) {
     final isSelected = _selectedLanguage == lang;
     return ListTile(
-      title: Text(lang, style: TextStyle(color: isSelected ? Colors.orangeAccent : Colors.white, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+      title: Text(
+        lang,
+        style: TextStyle(
+          color: isSelected ? Colors.orangeAccent : Colors.white,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
       trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.orangeAccent) : null,
       onTap: () {
         setState(() => _selectedLanguage = lang);
@@ -87,10 +93,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.home, color: Colors.white70),
-              title: const Text("Home / Local Area", style: TextStyle(color: Colors.white)),
-              subtitle: const Text("Goalpara / Assam", style: TextStyle(color: Colors.white38, fontSize: 12)),
+            const ListTile(
+              leading: Icon(Icons.home, color: Colors.white70),
+              title: Text("Home / Local Area", style: TextStyle(color: Colors.white)),
+              subtitle: Text("Goalpara / Assam", style: TextStyle(color: Colors.white38, fontSize: 12)),
             ),
             const Divider(color: Colors.white10),
             TextButton.icon(
@@ -127,6 +133,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: const Color(0xFF1E293B),
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.orangeAccent, size: 20),
+            color: const Color(0xFF1E293B),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            elevation: 8,
+            onSelected: (value) {
+              if (value == 'about') {
+                showAboutDialog(
+                  context: context,
+                  applicationName: "Assam Local Service",
+                  applicationVersion: "v1.0.4 Release",
+                  applicationLegalese: "© 2026 Assam Local Service. All Rights Reserved.",
+                );
+              } else if (value == 'support') {
+                _openWhatsAppSupport();
+              } else if (value == 'logout') {
+                _handleLogout();
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: 'about',
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.orangeAccent, size: 18),
+                    SizedBox(width: 10),
+                    Text("About App", style: TextStyle(color: Colors.white, fontSize: 13)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'support',
+                child: Row(
+                  children: [
+                    Icon(Icons.support_agent, color: Colors.greenAccent, size: 18),
+                    SizedBox(width: 10),
+                    Text("WhatsApp Support", style: TextStyle(color: Colors.white, fontSize: 13)),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(height: 1),
+              const PopupMenuItem<String>(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, color: Colors.redAccent, size: 18),
+                    SizedBox(width: 10),
+                    Text("Quick Logout", style: TextStyle(color: Colors.redAccent, fontSize: 13)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
