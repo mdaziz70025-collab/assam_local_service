@@ -85,6 +85,7 @@ class _HomeExploreTabState extends State<HomeExploreTab> {
   final PageController _bannerController = PageController();
   int _bannerIndex = 0;
   Timer? _bannerTimer;
+  String _selectedLanguage = "English (ENG)";
 
   final List<Map<String, dynamic>> _categories = [
     {'title': 'Electrician', 'icon': Icons.bolt, 'color': Colors.amber},
@@ -113,6 +114,52 @@ class _HomeExploreTabState extends State<HomeExploreTab> {
     super.dispose();
   }
 
+  void _openWhatsAppSupport() async {
+    final uri = Uri.parse("https://wa.me/917002521291?text=Hello%20Assam%20Local%20Service%20Support,%20I%20need%20help.");
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  void _showLanguageBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Select Language / ভাষা বাছক",
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            _buildLanguageOption("English (ENG)"),
+            _buildLanguageOption("অসমীয়া (Assamese)"),
+            _buildLanguageOption("বাংলা (Bengali)"),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption(String lang) {
+    final isSelected = _selectedLanguage == lang;
+    return ListTile(
+      title: Text(lang, style: TextStyle(color: isSelected ? Colors.orangeAccent : Colors.white, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+      trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.orangeAccent) : null,
+      onTap: () {
+        setState(() => _selectedLanguage = lang);
+        Navigator.pop(context);
+      },
+    );
+  }
+
   void _openWhatsApp(String phone, String name) async {
     final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
     final uri = Uri.parse("https://wa.me/91$cleanPhone?text=Hello%20$name,%20I%20want%20to%20book%20a%20service.");
@@ -130,7 +177,7 @@ class _HomeExploreTabState extends State<HomeExploreTab> {
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         children: [
-          // 📍 Top Location Bar
+          // 📍 Top Location Bar + 3-Dot Quick Action Menu
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -150,13 +197,64 @@ class _HomeExploreTabState extends State<HomeExploreTab> {
                   ],
                 ),
               ),
+
+              // 🔘 3-Dot Menu Button
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.orangeAccent.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10),
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withOpacity(0.08)),
                 ),
-                child: const Text("ENG", style: TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold, fontSize: 12)),
+                child: PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: Colors.orangeAccent, size: 20),
+                  color: const Color(0xFF1E293B),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 8,
+                  onSelected: (value) {
+                    if (value == 'settings') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                      );
+                    } else if (value == 'language') {
+                      _showLanguageBottomSheet();
+                    } else if (value == 'help') {
+                      _openWhatsAppSupport();
+                    }
+                  },
+                  itemBuilder: (BuildContext context) => [
+                    const PopupMenuItem<String>(
+                      value: 'settings',
+                      child: Row(
+                        children: [
+                          Icon(Icons.settings_outlined, color: Colors.orangeAccent, size: 18),
+                          SizedBox(width: 10),
+                          Text("Settings & Account", style: TextStyle(color: Colors.white, fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'language',
+                      child: Row(
+                        children: [
+                          Icon(Icons.translate, color: Colors.cyanAccent, size: 18),
+                          SizedBox(width: 10),
+                          Text("Language / ভাষা", style: TextStyle(color: Colors.white, fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'help',
+                      child: Row(
+                        children: [
+                          Icon(Icons.support_agent, color: Colors.greenAccent, size: 18),
+                          SizedBox(width: 10),
+                          Text("WhatsApp Support", style: TextStyle(color: Colors.white, fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
