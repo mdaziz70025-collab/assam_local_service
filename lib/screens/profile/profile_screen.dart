@@ -1,134 +1,102 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../admin/admin_panel_screen.dart';
+import '../provider/provider_registration_screen.dart';
+import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
   @override
-  _ProfileScreenState createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final User? user = FirebaseAuth.instance.currentUser;
-  bool isDarkMode = true;
-  String selectedLanguage = 'English';
+  bool _orderNotifications = true;
+  bool _partnerAlerts = true;
+  String _selectedLanguage = "English (ENG)";
 
-  Future<void> _handleLogout() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          "Log Out",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
-          "Are you sure you want to log out of Assam Local Service?",
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text("Log Out", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
+  User? get _currentUser => FirebaseAuth.instance.currentUser;
 
-    if (confirm != true) return;
+  bool get _isAdmin {
+    final email = _currentUser?.email?.toLowerCase() ?? '';
+    return email == "mdaziz70025@gmail.com";
+  }
 
-    try {
-      await GoogleSignIn().signOut();
-      await FirebaseAuth.instance.signOut();
-      if (!mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Logout failed: ${e.toString()}"),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+  void _openWhatsAppSupport() async {
+    final uri = Uri.parse("https://wa.me/917002521291?text=Hello%20Assam%20Local%20Service%20Support,%20I%20need%20help.");
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
-  void _showEditProfileSheet() {
-    final nameController = TextEditingController(text: user?.displayName ?? "");
+  void _showLanguageBottomSheet() {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       backgroundColor: const Color(0xFF1E293B),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          left: 20,
-          right: 20,
-          top: 20,
-        ),
+        padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Edit Profile",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+              "Select Language / ভাষা বাছক",
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: nameController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: "Full Name",
-                labelStyle: const TextStyle(color: Colors.orangeAccent),
-                filled: true,
-                fillColor: const Color(0xFF0F172A),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
+            _buildLanguageOption("English (ENG)"),
+            _buildLanguageOption("অসমীয়া (Assamese)"),
+            _buildLanguageOption("বাংলা (Bengali)"),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption(String lang) {
+    final isSelected = _selectedLanguage == lang;
+    return ListTile(
+      title: Text(lang, style: TextStyle(color: isSelected ? Colors.orangeAccent : Colors.white, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+      trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.orangeAccent) : null,
+      onTap: () {
+        setState(() => _selectedLanguage = lang);
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  void _showSavedAddressesDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.location_on, color: Colors.orangeAccent),
+            SizedBox(width: 8),
+            Text("Saved Addresses", style: TextStyle(color: Colors.white, fontSize: 16)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.home, color: Colors.white70),
+              title: const Text("Home / Local Area", style: TextStyle(color: Colors.white)),
+              subtitle: const Text("Goalpara / Assam", style: TextStyle(color: Colors.white38, fontSize: 12)),
             ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orangeAccent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () async {
-                  if (nameController.text.trim().isNotEmpty) {
-                    await user?.updateDisplayName(nameController.text.trim());
-                    setState(() {});
-                  }
-                  if (ctx.mounted) Navigator.pop(ctx);
-                },
-                child: const Text(
-                  "Save Changes",
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-              ),
+            const Divider(color: Colors.white10),
+            TextButton.icon(
+              onPressed: () => Navigator.pop(ctx),
+              icon: const Icon(Icons.add_location_alt, color: Colors.orangeAccent),
+              label: const Text("Add New Address", style: TextStyle(color: Colors.orangeAccent)),
             ),
           ],
         ),
@@ -136,174 +104,251 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void _handleLogout() async {
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = _currentUser;
+    final userName = user?.displayName ?? user?.email?.split('@').first ?? "Customer";
+    final userEmail = user?.email ?? "Not Logged In";
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
-        title: const Text(
-          "My Account",
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
+        title: const Text("Account & Settings", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: const Color(0xFF1E293B),
         foregroundColor: Colors.white,
         elevation: 0,
-        centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  Stack(
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        children: [
+          // 👤 Profile Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.06)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.orangeAccent.withOpacity(0.05),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 32,
+                  backgroundColor: Colors.orangeAccent.withOpacity(0.2),
+                  child: const Icon(Icons.person, color: Colors.orangeAccent, size: 36),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
-                        radius: 36,
-                        backgroundColor: Colors.orangeAccent,
-                        backgroundImage: user?.photoURL != null
-                            ? NetworkImage(user!.photoURL!)
-                            : null,
-                        child: user?.photoURL == null
-                            ? const Icon(Icons.person, size: 40, color: Colors.black)
-                            : null,
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: _showEditProfileSheet,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.orangeAccent,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.edit, size: 14, color: Colors.black),
-                          ),
-                        ),
-                      ),
+                      Text(userName, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 2),
+                      Text(userEmail, style: const TextStyle(color: Colors.white60, fontSize: 13)),
                     ],
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user?.displayName ?? "Md Aziz",
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          user?.email ?? user?.phoneNumber ?? "No Email Associated",
-                          style: const TextStyle(
-                            color: Colors.white60,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.handyman_outlined, color: Colors.orangeAccent),
-                    title: const Text("Register as Service Partner",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                    trailing: const Icon(Icons.arrow_forward_ios_rounded,
-                        size: 14, color: Colors.white38),
-                    onTap: () => Navigator.pushNamed(context, '/registerPartner'),
-                  ),
-                  const Divider(color: Colors.white10, height: 1, indent: 60),
-                  ListTile(
-                    leading: const Icon(Icons.support_agent, color: Colors.orangeAccent),
-                    title: const Text("Help & Support Desk",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                    trailing: const Icon(Icons.arrow_forward_ios_rounded,
-                        size: 14, color: Colors.white38),
-                    onTap: () {
-                      showModalBottomSheet(
-                        context: context,
-                        backgroundColor: const Color(0xFF1E293B),
-                        builder: (ctx) => const Padding(
-                          padding: EdgeInsets.all(24.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.support_agent, size: 40, color: Colors.orangeAccent),
-                              SizedBox(height: 12),
-                              Text(
-                                "Assam Local Support Desk",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                "Email: support@assamlocalservice.com\nHelpline: +91 70025 XXXXX",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.white70, height: 1.4),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEF4444),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
                 ),
-                icon: const Icon(Icons.logout, color: Colors.white, size: 20),
-                label: const Text(
-                  "LOG OUT",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontSize: 15,
-                  ),
-                ),
-                onPressed: _handleLogout,
-              ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // 👑 Super Admin Section (Only if Admin)
+          if (_isAdmin) ...[
+            _buildActionTile(
+              icon: Icons.admin_panel_settings,
+              title: "Super Admin Command Center",
+              subtitle: "Live orders radar, verify partners & store",
+              accentColor: Colors.amber,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminPanelScreen())),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // 🛠️ Partner Portal
+          _buildActionTile(
+            icon: Icons.handyman,
+            title: "Service Partner Hub",
+            subtitle: "Manage daily jobs, earnings & online radar",
+            accentColor: Colors.orangeAccent,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProviderRegistrationScreen())),
+          ),
+          const SizedBox(height: 24),
+
+          // ⚙️ App Preferences Section
+          const Text("App Preferences", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 14)),
+          const SizedBox(height: 10),
+          _buildSettingsGroup([
+            _buildSettingsItem(
+              icon: Icons.translate,
+              title: "App Language",
+              trailingText: _selectedLanguage,
+              onTap: _showLanguageBottomSheet,
+            ),
+            _buildSettingsItem(
+              icon: Icons.location_city,
+              title: "Saved Addresses",
+              onTap: _showSavedAddressesDialog,
+            ),
+            SwitchListTile(
+              value: _orderNotifications,
+              activeColor: Colors.orangeAccent,
+              title: const Text("Order Notifications", style: TextStyle(color: Colors.white, fontSize: 14)),
+              secondary: const Icon(Icons.notifications_outlined, color: Colors.orangeAccent, size: 22),
+              onChanged: (val) => setState(() => _orderNotifications = val),
+            ),
+            SwitchListTile(
+              value: _partnerAlerts,
+              activeColor: Colors.orangeAccent,
+              title: const Text("Partner Live Radar Alerts", style: TextStyle(color: Colors.white, fontSize: 14)),
+              secondary: const Icon(Icons.radar, color: Colors.orangeAccent, size: 22),
+              onChanged: (val) => setState(() => _partnerAlerts = val),
+            ),
+          ]),
+          const SizedBox(height: 24),
+
+          // 📞 Support & Legal
+          const Text("Support & Legal", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 14)),
+          const SizedBox(height: 10),
+          _buildSettingsGroup([
+            _buildSettingsItem(
+              icon: Icons.chat_bubble_outline,
+              title: "WhatsApp Help & Chat Support",
+              onTap: _openWhatsAppSupport,
+            ),
+            _buildSettingsItem(
+              icon: Icons.privacy_tip_outlined,
+              title: "Terms of Service & Privacy Policy",
+              onTap: () {},
+            ),
+            _buildSettingsItem(
+              icon: Icons.info_outline,
+              title: "App Version",
+              trailingText: "v1.0.4 Release",
+              onTap: () {},
+            ),
+          ]),
+          const SizedBox(height: 24),
+
+          // 🚪 Logout Button
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444).withOpacity(0.15),
+              foregroundColor: const Color(0xFFEF4444),
+              elevation: 0,
+              side: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            icon: const Icon(Icons.logout, size: 20),
+            label: const Text("LOGOUT ACCOUNT", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+            onPressed: _handleLogout,
+          ),
+          const SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color accentColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: accentColor.withOpacity(0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: accentColor.withOpacity(0.08),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: accentColor, size: 26),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, color: Colors.white38, size: 16),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildSettingsGroup(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildSettingsItem({
+    required IconData icon,
+    required String title,
+    String? trailingText,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.orangeAccent, size: 22),
+      title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14)),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (trailingText != null) ...[
+            Text(trailingText, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+            const SizedBox(width: 6),
+          ],
+          const Icon(Icons.chevron_right, color: Colors.white38, size: 18),
+        ],
+      ),
+      onTap: onTap,
     );
   }
 }
