@@ -18,6 +18,7 @@ class _ProviderRegistrationScreenState
     extends State<ProviderRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
+  bool _isEditing = false;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -75,7 +76,6 @@ class _ProviderRegistrationScreenState
           final status = data['status'] ?? '';
           final custAddress = (data['customerAddress'] ?? '').toString().toLowerCase();
 
-          // 📍 Location Filtering for Alert Popups
           bool matchesLocation = custAddress.contains(partnerCity) ||
               partnerCity.contains("assam") ||
               partnerCity.isEmpty;
@@ -315,17 +315,17 @@ class _ProviderRegistrationScreenState
         'totalEarnings': 0,
         'isOnline': true,
         'registeredAt': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("🎉 Congratulations! Your Partner Profile is Live."),
+          content: Text("🎉 Profile Updated Successfully!"),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
         ),
       );
-      setState(() {});
+      setState(() => _isEditing = false);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -418,19 +418,19 @@ class _ProviderRegistrationScreenState
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
-                      child:
-                          CircularProgressIndicator(color: Colors.orangeAccent),
+                      child: CircularProgressIndicator(color: Colors.orangeAccent),
                     );
                   }
 
-                  if (snapshot.hasData &&
+                  if (!_isEditing &&
+                      snapshot.hasData &&
                       snapshot.data != null &&
                       snapshot.data!.exists) {
                     final data = snapshot.data!.data() as Map<String, dynamic>;
                     return _buildPartnerDashboard(data);
                   }
 
-                  return _buildRegistrationForm();
+                  return _buildRegistrationForm(user);
                 },
               ),
       ),
@@ -441,7 +441,7 @@ class _ProviderRegistrationScreenState
     final String name = data['name'] ?? 'Partner';
     final String partnerPhone = data['phone'] ?? '7002521291';
     final String category = data['category'] ?? 'Electrician';
-    final String location = data['location'] ?? 'Assam';
+    final String location = data['location'] ?? 'Goalpara, Assam';
     final int baseRate = data['baseRate'] ?? 299;
     final double rating = (data['rating'] ?? 5.0).toDouble();
     final int jobs = data['totalJobs'] ?? 0;
@@ -449,7 +449,6 @@ class _ProviderRegistrationScreenState
     final bool isOnline = data['isOnline'] ?? true;
     final String partnerUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-    // 🚀 Start Realtime Popup Listener based on Online & Location Status
     _listenForNewIncomingOrders(category, name, partnerPhone, location, isOnline);
 
     return SingleChildScrollView(
@@ -529,6 +528,19 @@ class _ProviderRegistrationScreenState
                           ),
                         ],
                       ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.orangeAccent, size: 22),
+                      tooltip: "Edit Profession & Info",
+                      onPressed: () {
+                        _nameController.text = name;
+                        _phoneController.text = partnerPhone;
+                        _experienceController.text = data['experience'] ?? '';
+                        _rateController.text = "$baseRate";
+                        _locationController.text = location;
+                        _selectedCategory = category;
+                        setState(() => _isEditing = true);
+                      },
                     ),
                   ],
                 ),
@@ -684,7 +696,6 @@ class _ProviderRegistrationScreenState
                     return assignedPartnerId == partnerUid;
                   }
 
-                  // 📍 Match order within partner's Assam district or city
                   bool matchesLocation = custAddress.contains(partnerCity) ||
                       partnerCity.contains("assam") ||
                       partnerCity.isEmpty;
@@ -989,7 +1000,11 @@ class _ProviderRegistrationScreenState
     );
   }
 
-  Widget _buildRegistrationForm() {
+  Widget _buildRegistrationForm(User user) {
+    if (_nameController.text.isEmpty) {
+      _nameController.text = user.displayName ?? '';
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
       child: Form(
@@ -1005,27 +1020,20 @@ class _ProviderRegistrationScreenState
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.orangeAccent.withOpacity(0.2)),
               ),
-              child: Row(
+              child: const Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.orangeAccent.withOpacity(0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.handyman,
-                      color: Colors.orangeAccent,
-                      size: 30,
-                    ),
+                  Icon(
+                    Icons.handyman,
+                    color: Colors.orangeAccent,
+                    size: 30,
                   ),
-                  const SizedBox(width: 14),
-                  const Expanded(
+                  SizedBox(width: 14),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Join as a Service Partner",
+                          "Service Partner Profile",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -1034,7 +1042,7 @@ class _ProviderRegistrationScreenState
                         ),
                         SizedBox(height: 4),
                         Text(
-                          "Get local booking orders directly across Assam.",
+                          "Choose your trade and start getting local orders.",
                           style: TextStyle(color: Colors.white60, fontSize: 12),
                         ),
                       ],
@@ -1045,7 +1053,7 @@ class _ProviderRegistrationScreenState
             ),
             const SizedBox(height: 24),
             const Text(
-              "Partner Details",
+              "Required Details",
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
@@ -1055,21 +1063,21 @@ class _ProviderRegistrationScreenState
             const SizedBox(height: 14),
             _buildTextField(
               controller: _nameController,
-              label: "Full Name / Enterprise Name",
-              hint: "e.g. Pranab Kalita",
+              label: "Full Name",
+              hint: "e.g. Md Aziz",
               icon: Icons.person_outline,
             ),
             const SizedBox(height: 14),
             _buildTextField(
               controller: _phoneController,
-              label: "Mobile Number",
+              label: "Calling & WhatsApp Number",
               hint: "e.g. 70025XXXXX",
               icon: Icons.phone_android,
               keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 14),
             const Text(
-              "Service Category",
+              "Your Profession / Trade",
               style: TextStyle(color: Colors.white70, fontSize: 13),
             ),
             const SizedBox(height: 6),
@@ -1105,14 +1113,14 @@ class _ProviderRegistrationScreenState
             const SizedBox(height: 14),
             _buildTextField(
               controller: _experienceController,
-              label: "Experience",
-              hint: "e.g. 5 Years Experience",
+              label: "Work Experience",
+              hint: "e.g. 4 Years Experience",
               icon: Icons.work_outline,
             ),
             const SizedBox(height: 14),
             _buildTextField(
               controller: _rateController,
-              label: "Starting Service Charge (₹)",
+              label: "Starting Base Charge (₹)",
               hint: "e.g. 299",
               icon: Icons.currency_rupee,
               keyboardType: TextInputType.number,
@@ -1120,8 +1128,8 @@ class _ProviderRegistrationScreenState
             const SizedBox(height: 14),
             _buildTextField(
               controller: _locationController,
-              label: "Service Area / District in Assam",
-              hint: "e.g. Goalpara, Beltola, Silchar",
+              label: "District / Town in Assam",
+              hint: "e.g. Goalpara, Beltola",
               icon: Icons.location_on_outlined,
             ),
             const SizedBox(height: 30),
@@ -1140,7 +1148,7 @@ class _ProviderRegistrationScreenState
                 child: _isSaving
                     ? const CircularProgressIndicator(color: Colors.black)
                     : const Text(
-                        "REGISTER AS PARTNER",
+                        "SAVE & ACTIVATE PARTNER PROFILE",
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
@@ -1150,6 +1158,15 @@ class _ProviderRegistrationScreenState
                       ),
               ),
             ),
+            if (_isEditing) ...[
+              const SizedBox(height: 10),
+              Center(
+                child: TextButton(
+                  onPressed: () => setState(() => _isEditing = false),
+                  child: const Text("Cancel & Go Back", style: TextStyle(color: Colors.white60)),
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
           ],
         ),
