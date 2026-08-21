@@ -15,6 +15,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> with SingleTickerPr
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() => setState(() {}));
   }
 
   @override
@@ -23,94 +24,45 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> with SingleTickerPr
     super.dispose();
   }
 
-  // 🛍️ Add New Product Dialog
   void _showAddProductDialog() {
-    final nameCtrl = TextEditingController();
-    final priceCtrl = TextEditingController();
-    final oldPriceCtrl = TextEditingController();
-    String selectedTag = 'Best Seller';
-    String selectedCategory = 'Electrician';
+    final nameController = TextEditingController();
+    final priceController = TextEditingController();
+    final oldPriceController = TextEditingController();
+    String category = 'Electrician';
 
     showDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text("Add New Store Product", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: "Product Name", labelStyle: TextStyle(color: Colors.white70)),
-                ),
-                TextField(
-                  controller: priceCtrl,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: "Selling Price (₹)", labelStyle: TextStyle(color: Colors.white70)),
-                ),
-                TextField(
-                  controller: oldPriceCtrl,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: "Cutout / Old Price (₹)", labelStyle: TextStyle(color: Colors.white70)),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedTag,
-                  dropdownColor: const Color(0xFF1E293B),
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: "Marketing Tag", labelStyle: TextStyle(color: Colors.white70)),
-                  items: ['Best Seller', 'Hot Deal', 'Popular', '25% OFF', 'New Arrival']
-                      .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                      .toList(),
-                  onChanged: (val) => setModalState(() => selectedTag = val!),
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: selectedCategory,
-                  dropdownColor: const Color(0xFF1E293B),
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: "Category", labelStyle: TextStyle(color: Colors.white70)),
-                  items: ['Electrician', 'Plumber', 'Carpenter', 'Painter', 'AC Repair', 'Cleaning']
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                      .toList(),
-                  onChanged: (val) => setModalState(() => selectedCategory = val!),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text("Cancel", style: TextStyle(color: Colors.white38)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent),
-              onPressed: () async {
-                if (nameCtrl.text.trim().isEmpty || priceCtrl.text.trim().isEmpty) return;
-                await FirebaseFirestore.instance.collection('products').add({
-                  'name': nameCtrl.text.trim(),
-                  'price': int.tryParse(priceCtrl.text.trim()) ?? 0,
-                  'oldPrice': int.tryParse(oldPriceCtrl.text.trim()) ?? 0,
-                  'tag': selectedTag,
-                  'category': selectedCategory,
-                  'isAvailable': true,
-                  'createdAt': FieldValue.serverTimestamp(),
-                });
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("✅ Product added to Store successfully!"), backgroundColor: Colors.green),
-                );
-              },
-              child: const Text("SAVE PRODUCT", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-            ),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text("Add New Store Product", style: TextStyle(color: Colors.white, fontSize: 16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: nameController, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: "Product Name", labelStyle: TextStyle(color: Colors.white60))),
+            TextField(controller: priceController, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: "Selling Price (₹)", labelStyle: TextStyle(color: Colors.white60))),
+            TextField(controller: oldPriceController, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: "Cutout / Old Price (₹)", labelStyle: TextStyle(color: Colors.white60))),
           ],
         ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel", style: TextStyle(color: Colors.white38))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent),
+            onPressed: () async {
+              if (nameController.text.isNotEmpty) {
+                await FirebaseFirestore.instance.collection('products').add({
+                  'name': nameController.text.trim(),
+                  'price': int.tryParse(priceController.text.trim()) ?? 0,
+                  'oldPrice': int.tryParse(oldPriceController.text.trim()) ?? 0,
+                  'category': category,
+                  'createdAt': FieldValue.serverTimestamp(),
+                });
+                if (mounted) Navigator.pop(ctx);
+              }
+            },
+            child: const Text("SAVE PRODUCT", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
@@ -120,10 +72,15 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> with SingleTickerPr
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
-        title: const Text("👑 Admin Command Center", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+        title: const Row(
+          children: [
+            Icon(Icons.workspace_premium, color: Colors.amber, size: 22),
+            SizedBox(width: 8),
+            Text("Admin Command Center", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+          ],
+        ),
         backgroundColor: const Color(0xFF1E293B),
         foregroundColor: Colors.white,
-        elevation: 0,
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.orangeAccent,
@@ -131,18 +88,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> with SingleTickerPr
           unselectedLabelColor: Colors.white60,
           isScrollable: true,
           tabs: const [
-            Tab(icon: Icon(Icons.dashboard_rounded), text: "Overview"),
-            Tab(icon: Icon(Icons.receipt_long_rounded), text: "Live Orders"),
-            Tab(icon: Icon(Icons.verified_user_rounded), text: "Partners"),
-            Tab(icon: Icon(Icons.storefront_rounded), text: "Products"),
+            Tab(icon: Icon(Icons.dashboard), text: "Overview"),
+            Tab(icon: Icon(Icons.receipt_long), text: "Live Orders"),
+            Tab(icon: Icon(Icons.verified), text: "Partners"),
+            Tab(icon: Icon(Icons.storefront), text: "Products"),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.orangeAccent,
-        icon: const Icon(Icons.add, color: Colors.black),
-        label: const Text("Add Product", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        onPressed: _showAddProductDialog,
       ),
       body: TabBarView(
         controller: _tabController,
@@ -153,119 +104,108 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> with SingleTickerPr
           _buildProductsTab(),
         ],
       ),
+      // 🎯 FAB only appears on Products Tab (Index 3)
+      floatingActionButton: _tabController.index == 3
+          ? FloatingActionButton.extended(
+              backgroundColor: Colors.orangeAccent,
+              foregroundColor: Colors.black,
+              icon: const Icon(Icons.add),
+              label: const Text("Add Product", style: TextStyle(fontWeight: FontWeight.bold)),
+              onPressed: _showAddProductDialog,
+            )
+          : null,
     );
   }
 
-  // 📊 TAB 1: Real-time Analytics & Revenue
   Widget _buildOverviewTab() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('bookings').snapshots(),
-      builder: (context, orderSnap) {
-        return StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('providers').snapshots(),
-          builder: (context, partnerSnap) {
-            final orders = orderSnap.data?.docs ?? [];
-            final partners = partnerSnap.data?.docs ?? [];
+      builder: (context, snapshot) {
+        final docs = snapshot.data?.docs ?? [];
+        int completedOrders = 0;
+        int activeOrders = 0;
+        int grossRevenue = 0;
 
-            int totalRevenue = 0;
-            int completedJobs = 0;
-            int pendingJobs = 0;
+        for (var d in docs) {
+          final data = d.data() as Map<String, dynamic>;
+          final status = data['status'] ?? '';
+          final amount = data['totalAmount'] ?? 0;
+          if (status == "Service Completed") {
+            completedOrders++;
+            grossRevenue += (amount as num).toInt();
+          } else if (status.contains("Accepted")) {
+            activeOrders++;
+          }
+        }
 
-            for (var doc in orders) {
-              final d = doc.data() as Map<String, dynamic>;
-              final amt = d['totalAmount'] ?? 0;
-              final status = d['status'] ?? '';
-
-              if (status.toString().contains("Completed")) {
-                totalRevenue += (amt as num).toInt();
-                completedJobs++;
-              } else if (!status.toString().contains("Rejected")) {
-                pendingJobs++;
-              }
-            }
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Business Performance", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(child: _buildMetricCard("Gross Revenue", "₹ $totalRevenue", Icons.currency_rupee, Colors.greenAccent)),
-                      const SizedBox(width: 12),
-                      Expanded(child: _buildMetricCard("Platform Comm. (10%)", "₹ ${(totalRevenue * 0.10).toInt()}", Icons.account_balance_wallet, Colors.orangeAccent)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(child: _buildMetricCard("Total Partners", "${partners.length}", Icons.people_alt, Colors.cyanAccent)),
-                      const SizedBox(width: 12),
-                      Expanded(child: _buildMetricCard("Pending Orders", "$pendingJobs", Icons.pending_actions, Colors.amberAccent)),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Quick Status Breakdown", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                        const SizedBox(height: 12),
-                        _buildStatusRow("Completed Orders", completedJobs, Colors.greenAccent),
-                        const Divider(color: Colors.white10),
-                        _buildStatusRow("Active / On The Way", pendingJobs, Colors.orangeAccent),
-                        const Divider(color: Colors.white10),
-                        _buildStatusRow("Registered Partners in Assam", partners.length, Colors.blueAccent),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Row(
+              children: [
+                Expanded(child: _buildMetricCard("Gross Revenue", "₹ $grossRevenue", Icons.currency_rupee, Colors.greenAccent)),
+                const SizedBox(width: 12),
+                Expanded(child: _buildMetricCard("Commission (10%)", "₹ ${(grossRevenue * 0.1).toInt()}", Icons.account_balance_wallet, Colors.amberAccent)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: _buildMetricCard("Active Orders", "$activeOrders", Icons.pending_actions, Colors.orangeAccent)),
+                const SizedBox(width: 12),
+                Expanded(child: _buildMetricCard("Completed", "$completedOrders", Icons.task_alt, Colors.cyanAccent)),
+              ],
+            ),
+          ],
         );
       },
     );
   }
 
-  // 📦 TAB 2: Live Orders Monitoring
+  Widget _buildMetricCard(String label, String val, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 10),
+          Text(val, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(color: Colors.white60, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLiveOrdersTab() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('bookings').orderBy('createdAt', descending: true).snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: Colors.orangeAccent));
-        final docs = snapshot.data!.docs;
-
-        if (docs.isEmpty) {
-          return const Center(child: Text("No bookings recorded yet.", style: TextStyle(color: Colors.white60)));
-        }
+        final orders = snapshot.data!.docs;
 
         return ListView.separated(
           padding: const EdgeInsets.all(16),
-          itemCount: docs.length,
+          itemCount: orders.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, idx) {
-            final d = docs[idx].data() as Map<String, dynamic>;
-            final id = docs[idx].id;
-            final custName = d['customerName'] ?? 'Customer';
-            final custPhone = d['customerPhone'] ?? 'N/A';
-            final category = d['category'] ?? 'Service';
-            final amount = d['totalAmount'] ?? 0;
-            final address = d['customerAddress'] ?? 'Assam';
-            final status = d['status'] ?? 'Pending';
-            final partnerName = d['assignedPartnerName'] ?? 'Not Assigned';
-            final otp = d['completionOtp'] ?? 'N/A';
+          itemBuilder: (context, i) {
+            final data = orders[i].data() as Map<String, dynamic>;
+            final status = data['status'] ?? 'Pending';
+            final otp = data['completionOtp'];
+            final showOtp = status.contains("Accepted");
 
             return Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white10),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withOpacity(0.06)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,27 +213,20 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> with SingleTickerPr
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("$category (₹$amount)", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                      Text(status, style: const TextStyle(color: Colors.orangeAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+                      Text("${data['category']} (₹${data['totalAmount']})", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                      Text(status, style: TextStyle(color: status == "Service Completed" ? Colors.greenAccent : Colors.orangeAccent, fontSize: 12, fontWeight: FontWeight.bold)),
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text("👤 Customer: $custName ($custPhone)", style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                  Text("📍 Address: $address", style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                  Text("🛠️ Partner: $partnerName", style: const TextStyle(color: Colors.cyanAccent, fontSize: 12)),
-                  Text("🔐 Secret OTP: $otp", style: const TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton.icon(
-                        style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
-                        icon: const Icon(Icons.delete_outline, size: 16),
-                        label: const Text("Delete Record", style: TextStyle(fontSize: 11)),
-                        onPressed: () => FirebaseFirestore.instance.collection('bookings').doc(id).delete(),
-                      ),
-                    ],
-                  ),
+                  Text("Customer: ${data['customerName']} • ${data['customerAddress']}", style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                  if (showOtp && otp != null) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(color: Colors.green.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
+                      child: Text("🔐 Completion OTP: $otp", style: const TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ],
               ),
             );
@@ -303,78 +236,31 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> with SingleTickerPr
     );
   }
 
-  // 🛠️ TAB 3: Partner KYC & Verification Control
   Widget _buildPartnersTab() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('providers').snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: Colors.orangeAccent));
-        final docs = snapshot.data!.docs;
-
-        if (docs.isEmpty) {
-          return const Center(child: Text("No registered partners yet.", style: TextStyle(color: Colors.white60)));
-        }
+        final providers = snapshot.data!.docs;
 
         return ListView.separated(
           padding: const EdgeInsets.all(16),
-          itemCount: docs.length,
+          itemCount: providers.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, idx) {
-            final p = docs[idx].data() as Map<String, dynamic>;
-            final id = docs[idx].id;
-            final name = p['name'] ?? 'Partner';
-            final phone = p['phone'] ?? 'N/A';
-            final cat = p['category'] ?? 'General';
-            final loc = p['location'] ?? 'Assam';
-            final bool isVerified = p['isVerified'] ?? true;
-            final int jobs = p['totalJobs'] ?? 0;
-            final int earnings = p['totalEarnings'] ?? 0;
+          itemBuilder: (context, i) {
+            final p = providers[i].data() as Map<String, dynamic>;
+            final isVerified = p['isVerified'] ?? false;
+            final id = providers[i].id;
 
-            return Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: isVerified ? Colors.green.withOpacity(0.3) : Colors.red.withOpacity(0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isVerified ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(isVerified ? "Approved" : "Blocked", style: TextStyle(color: isVerified ? Colors.greenAccent : Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text("$cat • $loc • 📞 $phone", style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                  Text("Total Jobs: $jobs Done • Wallet Earned: ₹$earnings", style: const TextStyle(color: Colors.orangeAccent, fontSize: 12)),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: isVerified ? Colors.redAccent : Colors.greenAccent),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                          onPressed: () {
-                            FirebaseFirestore.instance.collection('providers').doc(id).update({'isVerified': !isVerified});
-                          },
-                          child: Text(isVerified ? "BLOCK / SUSPEND" : "APPROVE & VERIFY", style: TextStyle(color: isVerified ? Colors.redAccent : Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+            return ListTile(
+              tileColor: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              title: Text(p['name'] ?? 'Partner', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              subtitle: Text("${p['category']} • ${p['location'] ?? 'Assam'}", style: const TextStyle(color: Colors.white60, fontSize: 12)),
+              trailing: Switch(
+                value: isVerified,
+                activeColor: Colors.greenAccent,
+                onChanged: (val) => FirebaseFirestore.instance.collection('providers').doc(id).update({'isVerified': val}),
               ),
             );
           },
@@ -383,106 +269,34 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> with SingleTickerPr
     );
   }
 
-  // 🛍️ TAB 4: Store Products & Marketing Items Manager
   Widget _buildProductsTab() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('products').snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: Colors.orangeAccent));
-        final docs = snapshot.data!.docs;
-
-        if (docs.isEmpty) {
-          return const Center(child: Text("No custom products yet. Tap + to add!", style: TextStyle(color: Colors.white60)));
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text("No custom products yet. Tap + to add!", style: TextStyle(color: Colors.white38)));
         }
+        final prods = snapshot.data!.docs;
 
         return ListView.separated(
           padding: const EdgeInsets.all(16),
-          itemCount: docs.length,
+          itemCount: prods.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, idx) {
-            final pr = docs[idx].data() as Map<String, dynamic>;
-            final id = docs[idx].id;
-            final name = pr['name'] ?? 'Product';
-            final price = pr['price'] ?? 0;
-            final oldPrice = pr['oldPrice'] ?? 0;
-            final tag = pr['tag'] ?? 'Deal';
-            final cat = pr['category'] ?? 'General';
-
-            return Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white10),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(color: Colors.orangeAccent.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
-                              child: Text(tag, style: const TextStyle(color: Colors.orangeAccent, fontSize: 10, fontWeight: FontWeight.bold)),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(cat, style: const TextStyle(color: Colors.white38, fontSize: 11)),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                        const SizedBox(height: 2),
-                        Text("₹$price (Old: ₹$oldPrice)", style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 13)),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                    onPressed: () => FirebaseFirestore.instance.collection('products').doc(id).delete(),
-                  ),
-                ],
+          itemBuilder: (context, i) {
+            final d = prods[i].data() as Map<String, dynamic>;
+            return ListTile(
+              tileColor: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              title: Text(d['name'] ?? '', style: const TextStyle(color: Colors.white)),
+              subtitle: Text("₹${d['price']} (Cutout: ₹${d['oldPrice']})", style: const TextStyle(color: Colors.orangeAccent)),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                onPressed: () => FirebaseFirestore.instance.collection('products').doc(prods[i].id).delete(),
               ),
             );
           },
         );
       },
-    );
-  }
-
-  Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 10),
-          Text(value, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 2),
-          Text(title, style: const TextStyle(color: Colors.white60, fontSize: 11)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusRow(String label, int count, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
-          Text("$count", style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 14)),
-        ],
-      ),
     );
   }
 }
