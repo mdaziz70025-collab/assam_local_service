@@ -39,6 +39,16 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     }
   }
 
+  Future<void> _openHelpSupport(String? currentOrderId) async {
+    final orderText = currentOrderId != null ? "regarding%20Order%20ID:%20$currentOrderId" : "regarding%20my%20recent%20booking";
+    final Uri helpUri = Uri.parse(
+      "https://wa.me/917002521291?text=Hello%20Assam%20Local%20Service%20Support,%20I%20need%20help%20$orderText.",
+    );
+    if (await canLaunchUrl(helpUri)) {
+      await launchUrl(helpUri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   void _showRatingDialog(String orderId) {
     showDialog(
       context: context,
@@ -124,6 +134,51 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         backgroundColor: const Color(0xFF1E293B),
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.orangeAccent, size: 20),
+            color: const Color(0xFF1E293B),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            elevation: 8,
+            onSelected: (value) {
+              if (value == 'refresh') {
+                setState(() {});
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Orders updated! 🔄"),
+                    duration: Duration(seconds: 1),
+                    backgroundColor: Colors.orangeAccent,
+                  ),
+                );
+              } else if (value == 'help') {
+                _openHelpSupport(widget.orderId);
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: 'refresh',
+                child: Row(
+                  children: [
+                    Icon(Icons.refresh, color: Colors.cyanAccent, size: 18),
+                    SizedBox(width: 10),
+                    Text("Refresh Orders", style: TextStyle(color: Colors.white, fontSize: 13)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'help',
+                child: Row(
+                  children: [
+                    Icon(Icons.support_agent, color: Colors.greenAccent, size: 18),
+                    SizedBox(width: 10),
+                    Text("Booking Help & Support", style: TextStyle(color: Colors.white, fontSize: 13)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: user == null
           ? const Center(
